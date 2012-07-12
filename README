@@ -1,7 +1,14 @@
 
-                                TSDB Explorer
-                                =============
+                     TSDB Explorer (Placr TFL fork)
+                     ==============================
 
+This is a forked codebase created by Placr Ltd (www.placr.co.uk) and based
+upon TSDB Explorer. Various changes have been made to allow it to serve
+live train departures for London Overground trains. The original TSDB
+readme follows below.
+
+ -- David Mountain <david.mountain@placr.co.uk>
+ 
 TSDB Explorer is an application used to process train data and visualise it
 through a web browser.
 
