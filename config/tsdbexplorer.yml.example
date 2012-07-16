@@ -41,3 +41,13 @@ RESTRICTIONS:
   category:    [nil]
 
 BRANDING:      'TSDB Explorer'
+
+TFL_TRACKER:
+   script_dir: 'live_monitor'
+   parser_script: 'live_feed_parser.rb'
+   logfile: 'live_feed_parser.log'
+   pidfile: 'live_feed_parser.pid'
+   networkrail_feedurl: 'datafeeds.networkrail.co.uk'
+   networkrail_login: [nil]
+   networkrail_passcode: [nil]
+   error_msg_recipient_email: [nil]

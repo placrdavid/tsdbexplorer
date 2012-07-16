@@ -60,6 +60,8 @@ Tsdbexplorer::Application.routes.draw do
   match '/session/toggle_on/:key', :controller => 'session', :action => 'toggle_on'
   match '/session/toggle_off/:key', :controller => 'session', :action => 'toggle_off'
 
+  match '/live/station/:tiploc', :controller => 'live', :action => 'stations_updates_json'
+
   match ':controller(/:action(/:id(.:format)))'
 
 end
