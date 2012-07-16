@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120507153751) do
+ActiveRecord::Schema.define(:version => 20120713160825) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -331,6 +331,27 @@ ActiveRecord::Schema.define(:version => 20120507153751) do
     t.datetime "updated_at"
   end
 
+  create_table "station_updates", :force => true do |t|
+    t.string   "tiploc_code",              :limit => 7
+    t.string   "location_type",            :limit => 2
+    t.string   "platform",                 :limit => 64
+    t.string   "train_id",                 :limit => 10
+    t.integer  "diff_from_timetable_secs"
+    t.string   "planned_arrival",          :limit => 4
+    t.string   "predicted_arrival",        :limit => 4
+    t.string   "planned_departure",        :limit => 4
+    t.string   "predicted_departure",      :limit => 4
+    t.string   "event_type",               :limit => 32
+    t.string   "planned_event_type",       :limit => 32
+    t.string   "variation_status",         :limit => 32
+    t.datetime "created_at",                             :null => false
+    t.datetime "updated_at",                             :null => false
+  end
+
+  add_index "station_updates", ["platform"], :name => "index_station_updates_on_platform"
+  add_index "station_updates", ["tiploc_code"], :name => "index_station_updates_on_tiploc_code"
+  add_index "station_updates", ["train_id"], :name => "index_station_updates_on_train_id"
+
   create_table "td_areas", :force => true do |t|
     t.string   "td_area",    :limit => 2
     t.text     "name"
@@ -399,6 +420,37 @@ ActiveRecord::Schema.define(:version => 20120507153751) do
   add_index "tiplocs", ["crs_code"], :name => "index_tiplocs_on_crs_code"
   add_index "tiplocs", ["stanox"], :name => "index_tiplocs_on_stanox"
   add_index "tiplocs", ["tiploc_code"], :name => "index_tiplocs_on_tiploc_code", :unique => true
+
+  create_table "tracked_trains", :force => true do |t|
+    t.string   "msg_type",             :limit => 4
+    t.string   "schedule_source",      :limit => 1
+    t.string   "train_file_address",   :limit => 4
+    t.date     "schedule_end_date"
+    t.string   "train_id",             :limit => 10
+    t.date     "tp_origin_timestamp"
+    t.datetime "creation_timestamp"
+    t.string   "tp_origin_stanox",     :limit => 5
+    t.datetime "origin_dep_timestamp"
+    t.string   "train_service_code",   :limit => 8
+    t.string   "toc_id",               :limit => 2
+    t.string   "d1266_record_number",  :limit => 5
+    t.string   "train_call_type",      :limit => 25
+    t.string   "train_uid",            :limit => 6
+    t.string   "train_call_mode",      :limit => 25
+    t.string   "schedule_type",        :limit => 1
+    t.string   "sched_origin_stanox",  :limit => 5
+    t.string   "schedule_wtt_id",      :limit => 5
+    t.date     "schedule_start_date"
+    t.string   "origin_dep_hhmm",      :limit => 5
+    t.string   "basic_schedule_uuid",  :limit => 36
+    t.string   "origin_name",          :limit => 64
+    t.string   "destination_name",     :limit => 64
+    t.string   "atoc_code",            :limit => 2
+    t.datetime "created_at",                         :null => false
+    t.datetime "updated_at",                         :null => false
+  end
+
+  add_index "tracked_trains", ["train_id"], :name => "index_tracked_trains_on_train_id"
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false
