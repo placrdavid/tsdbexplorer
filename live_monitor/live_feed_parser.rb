@@ -496,11 +496,6 @@ module Poller
 
       @error_msg_recipient_email = ARGV[10] 
 
-
-#pid = Process.pid
-#puts 'got the  process id - its  '+pid.to_s
-
-
       open_db_connection(@host, @dbname, @port, @dbusername, @dbuserpwd)      
       # prep our SQL queries
       prepare_queries()     
