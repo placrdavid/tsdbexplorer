@@ -3,3 +3,6 @@ db/*.sqlite3
 log/*.log
 tmp/
 config/database.yml
+config/tsdbexplorer.yml
+live_monitor/live_feed_parser.log
+live_monitor/live_feed_parser.pid

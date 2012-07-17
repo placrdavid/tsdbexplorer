@@ -33,8 +33,10 @@ error_msg_recipient_email = tsdb_settings['TFL_TRACKER']['error_msg_recipient_em
 # formulate the cmd line string
 ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbosity.to_s+"' '"+host.to_s+"' '"+port.to_s+"' '"+dbname.to_s+"' '"+username.to_s+"' '"+pwd.to_s+"' '"+networkrail_feedurl.to_s+"' '"+networkrail_login.to_s+"' '"+networkrail_passcode.to_s+"' '"+error_msg_recipient_email+"' >> "+logfilepath.to_s+""
 
+puts 'ruby_cmdline_string'
+puts ruby_cmdline_string
 # live_parser_running ? 
-process_running = false
+#process_running = false
 
 # check if the pifile exists
 #pidfilename = tsdb_settings['TFL_TRACKER']['pidfile']

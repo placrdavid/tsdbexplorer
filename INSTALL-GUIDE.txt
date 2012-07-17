@@ -85,3 +85,13 @@ Regardless of whether you have a partial or full extract of the data, run 'rails
 
 This can take a long time, especially if you're using sqlite as a backend database.  Once it's done, you're up and running!
 
+
+Live departures data
+----------------------
+
+This fork of TSDBExplorer is configured to parse the train movement feed from 'datafeeds.networkrail.co.uk'.
+To access this feed you will need a valid username and passcode - register at 'datafeeds.networkrail.co.uk' for access. 
+You should also edit the TFL_TRACKER settings in the config/tsdbexplorer.yml file. 
+The key parameters to change are 'networkrail_login', 'networkrail_passcode' to the credentials you received after registering 
+at datafeeds.networkrail.co.uk, and 'error_msg_recipient_email' to an email address you want to  use to receive email alerts 
+when the feed parsing encounters problems.

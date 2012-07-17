@@ -187,7 +187,7 @@ def process_activation_msg(indiv_msg)
    # get the get_basic_schedule_uuid that matches this activation msg
    matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
    n_matching_uuids = matching_uuid_res.count
-
+   
    # there should be one matching code, else we have a problem
    if n_matching_uuids==1
       basic_schedule_uuid = matching_uuid_res[0]['uuid']
@@ -195,11 +195,11 @@ def process_activation_msg(indiv_msg)
 
       # get the destination name 
       resdest = @conn.exec_prepared("get_schedules_destination_name_plan", [basic_schedule_uuid]) 
-      destname = resdest[0]['description']
-      
+      destname = resdest[0]['tps_description']
+            
       # get the origin name 
       resorigin = @conn.exec_prepared("get_schedules_origin_name_plan", [basic_schedule_uuid]) 
-      originname = resorigin[0]['description']
+      originname = resorigin[0]['tps_description']
 
       # insert into tracking table
       res = @conn.exec_prepared("store_activation_msg_plan", [msg_type, schedule_source, train_file_address, schedule_end_date, train_id, tp_origin_timestamp, 
