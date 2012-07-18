@@ -13,6 +13,7 @@ require 'json'
 
 require 'yaml'
 require "pg"
+require "date"
 
 STDOUT.sync = true #fails
 
@@ -34,11 +35,16 @@ STDOUT.sync = true #fails
 # stores the current msg - for debug diagnostics
 @current_msg
 
+# stores the last time we 'cleaned' the station_updates and tracked_trains tables for legacy entries
+@timelastclean
+# stores the time we last received a msg from network rail
+#@timelastmsg
+
 # open the DB connection
 def open_db_connection(host, dbname, port, username, pwd)
    # Connection to rails DB
    @conn = PGconn.open(:host=> host, :user => username, :password => pwd, :dbname => dbname, :port => port)
-   puts 'connected to DB' unless @quiet
+   puts Time.now.to_s+': connected to DB' unless @quiet
 end
 
 # close the DB connection TODO case for closing this?
@@ -97,7 +103,6 @@ end
 # prepare DB queries
 def prepare_queries()
 
-
    # get basic_schedule uuid for an activation msg
    get_basic_schedule_uuid_for_activation_msg_sql = "SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
    @conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
@@ -149,11 +154,24 @@ def prepare_queries()
    find_downstream_locations_excl_sql = "select * from locations where basic_schedule_uuid = $1 and seq > $2 and (public_arrival is not null or public_departure is not null) order by seq"
    @conn.prepare("find_downstream_locations_excl_plan", find_downstream_locations_excl_sql)
 
+   # delete tracked trains older than specified time period
+   tracked_trains_expiry = '1 day'
+   #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '1 day'"
+   delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '"+tracked_trains_expiry+"'"
+   @conn.prepare("delete_legacy_trackedtrains_plan", delete_legacy_trackedtrains_sql)
+
+   # delete station_updates older than specified time period
+   station_updates_expiry = '30 minutes'
+   delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_expiry+"'"
+   #delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '30 minutes'"
+   @conn.prepare("delete_legacy_stationupdates_plan", delete_legacy_stationupdates_sql)
+
+
 end
 
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
-   puts '-----------0001 msg start--------------'  unless @quiet
+   puts Time.now.to_s+': -----------0001 msg start--------------'  unless @quiet
 
    # get / process the fields of the activation msg       
    toc_id = indiv_msg['body']['toc_id']     
@@ -206,20 +224,20 @@ def process_activation_msg(indiv_msg)
       creation_timestamp, tp_origin_stanox, origin_dep_timestamp, train_service_code, toc_id, d1266_record_number, 
       train_call_type, train_uid, train_call_mode, schedule_type, sched_origin_stanox, schedule_wtt_id,  schedule_start_date, origin_dep_hhmm, 
       basic_schedule_uuid, originname, destname, atoc_code, Time.new, Time.new]) 
-      puts '0001 msg - now tracking train_id '+train_id+''        unless @quiet                 
+      puts Time.now.to_s+': 0001 msg - now tracking train_id '+train_id+''        unless @quiet                 
    elsif  n_matching_uuids==0
-      puts 'PROBLEM: no matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
+      puts Time.now.to_s+': PROBLEM: no matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
    else
-      puts 'PROBLEM: multiple matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
+      puts Time.now.to_s+': PROBLEM: multiple matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
    end
-   puts '-----------0001 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0001 msg end--------------' unless @quiet
 end
 
 # process the 0002 cancellation message
 def process_cancellation_msg(indiv_msg, tracked_train)
 
-   puts '-----------0002 msg start--------------' unless @quiet
-   puts 'its a 0002 msg....' unless @quiet
+   puts Time.now.to_s+': -----------0002 msg start--------------' unless @quiet
+   puts Time.now.to_s+': its a 0002 msg....' unless @quiet
    p indiv_msg unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
@@ -250,14 +268,14 @@ def process_cancellation_msg(indiv_msg, tracked_train)
    @conn.exec_prepared("remove_all_trackedtrains_for_trainid_plan", [train_id]) 
    
    #res = @conn.exec_prepared("insert_0002_msg_plan", [msg_type, train_file_address, train_service_code, orig_loc_stanox, toc_id, dep_timestamp, division_code, loc_stanox, canx_timestamp, canx_reason_code, train_id, orig_loc_timestamp, canx_type, basic_schedule_uuid, Time.new, Time.new]) 
-   puts '-----------0002 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0002 msg end--------------' unless @quiet
 
 end
 
 # process the 0003 Train Movement message
 def process_trainmovement_msg(indiv_msg, tracked_train)
 
-   puts '-----------0003 msg start--------------' unless @quiet
+   puts Time.now.to_s+': -----------0003 msg start--------------' unless @quiet
    
    # get the schedule UUID
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']            
@@ -315,18 +333,18 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    journey_complete = false
 
    # various cases can trigger a journey to be complete
-   puts 'train_terminated = '+train_terminated unless @quiet
-   puts 'event_type = '+event_type unless @quiet
-   puts 'planned_event_type = '+planned_event_type unless @quiet
+   puts Time.now.to_s+': train_terminated = '+train_terminated unless @quiet
+   puts Time.now.to_s+': event_type = '+event_type unless @quiet
+   puts Time.now.to_s+': planned_event_type = '+planned_event_type unless @quiet
    if train_terminated == 'true' || event_type == 'DESTINATION' || planned_event_type == 'DESTINATION'
       journey_complete
    end                        
-   puts 'journey_complete = '+journey_complete.to_s unless @quiet
+   puts Time.now.to_s+': journey_complete = '+journey_complete.to_s unless @quiet
 
    # if journey is complete, remove all refs to this train in tracked trains table, and quit this method
    if journey_complete
       @conn.exec_prepared("remove_all_trackedtrains_for_trainid_plan", [train_id]) 
-      puts 'train is terminated, so flushing from station_updates and not adding any more info ' unless @quiet
+      puts Time.now.to_s+': train is terminated, so flushing from station_updates and not adding any more info ' unless @quiet
       return
    end                        
 
@@ -336,18 +354,18 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    focal_scheduled_location=nil
    # check the n tiploc/location paris we have. Zero is a problem and we can't update. But we can handle the one or more case
    if n_matching_tiploclocations ==0
-      puts 'PROBLEM: combination of stanox '+loc_stanox.to_s+' and basic_schedule_uuid '+basic_schedule_uuid+' matches '+n_matching_tiploclocations.to_s + ' tiplocs/locations'
+      puts Time.now.to_s+': PROBLEM: combination of stanox '+loc_stanox.to_s+' and basic_schedule_uuid '+basic_schedule_uuid+' matches '+n_matching_tiploclocations.to_s + ' tiplocs/locations'
    elsif n_matching_tiploclocations ==1
       focal_scheduled_location = tiploclocation_res[0]
    # TODO catch / handle this event 
    else
-      #puts 'PROBLEM: combination of stanox '+loc_stanox.to_s+' and basic_schedule_uuid '+basic_schedule_uuid+' matches '+n_matching_tiploclocations.to_s + ' tiplocs/locations'
+      #puts Time.now.to_s+': PROBLEM: combination of stanox '+loc_stanox.to_s+' and basic_schedule_uuid '+basic_schedule_uuid+' matches '+n_matching_tiploclocations.to_s + ' tiplocs/locations'
       # TODO  use first for an arrival event, otherwise last?
       if event_type == 'ARRIVAL'
-         #puts 'arrival event, so using first' unless @quiet
+         #puts Time.now.to_s+': arrival event, so using first' unless @quiet
          focal_scheduled_location = tiploclocation_res[0]
       else
-         #puts 'not an arrival event, so using last' unless @quiet
+         #puts Time.now.to_s+': not an arrival event, so using last' unless @quiet
          focal_scheduled_location = tiploclocation_res[n_matching_tiploclocations-1]
       end
    end
@@ -380,11 +398,11 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
          diff_from_timetable_secs.to_i, planned_arrival, predicted_arrival, planned_departure, predicted_departure, event_type, planned_event_type, 
          variation_status, Time.new, Time.new])                       
       }
-      puts 'updated = '+downstream_locations.count.to_s+' stations downstream of '+loc_tiploc unless @quiet
+      puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations downstream of '+loc_tiploc unless @quiet
       
       # for the arrival case, update the current tiploc appropriately
       if event_type == 'ARRIVAL'      
-         puts 'we have on arrival - so adding the focal tiploc' unless @quiet
+         puts Time.now.to_s+': ARRIVAL event - adding the focal tiploc' unless @quiet
          planned_arrival =focal_scheduled_location['public_arrival'].strip unless focal_scheduled_location['public_arrival'].nil?
          predicted_arrival = calculate_predicted_time_hhmm(planned_arrival, diff_from_timetable_secs.to_i, true)  unless focal_scheduled_location['public_arrival'].nil?        
          planned_departure =focal_scheduled_location['public_departure'].strip unless focal_scheduled_location['public_departure'].nil?
@@ -398,10 +416,9 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
       end
 
    else
-      puts 'not able to update station_updates table' unless @quiet
+      puts Time.now.to_s+': not able to update station_updates table' unless @quiet
    end                              
-   puts '-----------0003 msg end--------------' unless @quiet
-
+   puts Time.now.to_s+': -----------0003 msg end--------------' unless @quiet
 
 end
 
@@ -409,71 +426,88 @@ end
 # can't do anything with this...
 def process_unidentifiedtrain_msg(indiv_msg, tracked_train)
 
-   puts '-----------0004 msg start--------------' unless @quiet
-   puts 'its a 0004 msg....' unless @quiet
+   puts Time.now.to_s+': -----------0004 msg start--------------' unless @quiet
+   puts Time.now.to_s+': its a 0004 msg....' unless @quiet
    p indiv_msg unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
    
-   puts '-----------0004 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0004 msg end--------------' unless @quiet
 end 
 
 # process the 0005 Train Reinstatement message
 # ?
 def process_trainreinstatement_msg(indiv_msg, tracked_train)
-   puts '-----------0005 msg start--------------' unless @quiet
-   puts 'its a 0005 msg....' unless @quiet
+   puts Time.now.to_s+': -----------0005 msg start--------------' unless @quiet
+   puts Time.now.to_s+': its a 0005 msg....' unless @quiet
    p indiv_msg unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
    
    train_id  = indiv_msg['body']['train_id']
-   puts 'the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'   unless @quiet
-   puts '-----------0005 msg end--------------' unless @quiet
+   puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'   unless @quiet
+   puts Time.now.to_s+': -----------0005 msg end--------------' unless @quiet
 
 end        
 
 # process the 0006 Train Change of Origin
 # ?
 def process_trainchangeoforigin_msg(indiv_msg, tracked_train)
-   puts '-----------0006 msg start--------------' unless @quiet
-   puts 'its a 0006 msg....' unless @quiet
+   puts Time.now.to_s+': -----------0006 msg start--------------' unless @quiet
+   puts Time.now.to_s+': its a 0006 msg....' unless @quiet
    p indiv_msg unless @quiet
    
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
       
    train_id = indiv_msg['body']['train_id']
-   puts 'the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'           unless @quiet                                      
-   puts '-----------0006 msg end--------------' unless @quiet
+   puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'           unless @quiet                                      
+   puts Time.now.to_s+': -----------0006 msg end--------------' unless @quiet
 
 end
 
 # process the 0007 Train Change of Identity message
 # update the train id in trust_feed, tracked_trains and station_updates
 def process_trainchangeofidentify_msg(indiv_msg, tracked_train)
-   puts '-----------0007 msg start--------------' unless @quiet
-   puts 'its a 0007 msg....' unless @quiet
+   puts Time.now.to_s+': -----------0007 msg start--------------' unless @quiet
+   puts Time.now.to_s+': its a 0007 msg....' unless @quiet
    p indiv_msg unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
    train_id  = indiv_msg['body']['train_id']
-   puts 'the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'        unless @quiet                                          unless @quiet
+   puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'        unless @quiet                                          unless @quiet
 
-   puts '-----------0007 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0007 msg end--------------' unless @quiet
 
 end
 
 # process the 0008 Train Change of Location message
 def process_trainreinstatement_msg(indiv_msg, tracked_train)
-   puts '-----------0008 msg start--------------' unless @quiet
-   puts 'its a 0008 msg....' unless @quiet
+   puts Time.now.to_s+': -----------0008 msg start--------------' unless @quiet
+   puts Time.now.to_s+': its a 0008 msg....' unless @quiet
    p indiv_msg unless @quiet
 
    train_id  = indiv_msg['body']['train_id']
-   puts 'the train_id '+train_id+' relates to basic_schedule_uuid '+tracked_train['basic_schedule_uuid']+' so we can ref with timetables'                                                 unless @quiet
+   puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+tracked_train['basic_schedule_uuid']+' so we can ref with timetables'                                                 unless @quiet
    
-   puts '-----------0008 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0008 msg end--------------' unless @quiet
 
+end
+
+
+# clean up all live feeds
+def clean_live_feed
+   clean_tracked_trains()
+   clean_station_updates()
+end
+
+# remove any tracked trains that were activated a long time ago
+def clean_tracked_trains
+   @conn.exec_prepared("delete_legacy_trackedtrains_plan", [])     
+end
+
+# remove any aged station updates
+def clean_station_updates
+   @conn.exec_prepared("delete_legacy_stationupdates_plan", [])     
 end
 
 module Poller
@@ -482,6 +516,9 @@ module Poller
 
    # initialisation steps once we have a connection to apachemq feed
    def connection_completed
+
+      # set time of last clean to 24hrs ago
+      @timelastclean = Time.now - (60*60*24)
 
       @environment = ARGV[0]
       @quiet = false      
@@ -503,19 +540,20 @@ module Poller
       # authent / connect to feed - credentials loaded from a yml
       networkrail_login = 'david.mountain@placr.co.uk'
       networkrail_passcode = 'Thentherewere3;'
-      puts 'connecting to feed' unless @quiet
+      puts Time.now.to_s+': connecting to feed' unless @quiet
       connect :login => @networkrail_login, :passcode => @networkrail_passcode
-      puts 'connected to feed' unless @quiet
+      puts Time.now.to_s+': connected to feed' unless @quiet
 
    end
 
    def receive_msg msg
+   
       
-#     puts 'msg received' unless @quiet
+#     puts Time.now.to_s+': msg received' unless @quiet
       
       if msg.command == "CONNECTED"
 
-#         puts 'got connected - subscribing' unless @quiet
+#         puts Time.now.to_s+': got connected - subscribing' unless @quiet
 
 #         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
          subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
@@ -527,6 +565,8 @@ module Poller
 
          begin
 
+#           @timelastmsg = Time.now
+            
             msg_list = JSON.parse(msg.body)
             if msg.header['destination'] ==   '/topic/TRAIN_MVT_ALL_TOC' || msg.header['destination'] ==   '/topic/TRAIN_MVT_EK_TOC'
                msg_list.each do |indiv_msg|
@@ -537,7 +577,7 @@ module Poller
                   if toc_id == '30'
                      msg_type = indiv_msg['header']['msg_type']
 
-                     puts 'got a '+msg_type.to_s+' msg to process' unless @quiet
+                     puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
       
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
@@ -556,14 +596,14 @@ module Poller
                         if matching_trackedtrains_res.count.to_i == 0
                            process_activation_msg(indiv_msg)   
                         else
-                           puts 'PROBLEM!'                                                
-                           puts 'we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
+                           puts Time.now.to_s+': PROBLEM!'                                                
+                           puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
                         end       
                      end
                      # Message 2 – 0002 – Cancellation
                      if msg_type == '0002'
                         if tracked_train.nil?
-                           puts 'the train_id '+train_id+' has not been activated, so we cant xref with timetables'    unless @quiet                     
+                           puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                         else
                            process_cancellation_msg(indiv_msg, tracked_train)      
                         end
@@ -571,7 +611,7 @@ module Poller
                      # Message 3 – 0003 – Train Movement
                      if msg_type == '0003'
                         if tracked_train.nil?
-                           puts 'the train_id '+train_id+' has not been activated, so we cant xref with timetables'     unless @quiet                    
+                           puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"     unless @quiet                    
                         else
                            #process_trainmovement_msg(indiv_msg, basic_schedule_uuid)      
                            process_trainmovement_msg(indiv_msg, tracked_train)      
@@ -580,7 +620,7 @@ module Poller
                      # Message 4 – 0004 – Unidentified Train
                      if msg_type == '0004'
                         if tracked_train.nil?
-                           puts 'the train_id '+train_id+' has not been activated, so we cant xref with timetables'        unless @quiet                 
+                           puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"        unless @quiet                 
                         else
                            process_unidentifiedtrain_msg(indiv_msg, tracked_train)      
                         end                    
@@ -588,7 +628,7 @@ module Poller
                      # Message 5 – 0005 – Train Reinstatement
                      if msg_type == '0005'                     
                         if tracked_train.nil?
-                           puts 'the train_id '+train_id+' has not been activated, so we cant xref with timetables'    unless @quiet                     
+                           puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                         else
                            process_trainreinstatement_msg(indiv_msg, tracked_train)      
                         end              
@@ -596,7 +636,7 @@ module Poller
                      # Message 6 – 0006 – Train Change of Origin
                      if msg_type == '0006'
                         if tracked_train.nil?
-                           puts 'the train_id '+train_id+' has not been activated, so we cant xref with timetables'    unless @quiet                     
+                           puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                         else
                            process_trainchangeoforigin_msg(indiv_msg, tracked_train)      
                         end 
@@ -604,7 +644,7 @@ module Poller
                      # Message 7 – 0007 – Train Change of Identity
                      if msg_type == '0007'
                         if tracked_train.nil?
-                           puts 'the train_id '+train_id+' has not been activated, so we cant xref with timetables'    unless @quiet                     
+                           puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                         else
                            process_trainchangeofidentify_msg(indiv_msg, tracked_train)      
                         end                     
@@ -612,17 +652,28 @@ module Poller
                      # Message 8 – 0008 – Train Change of Location
                      if msg_type == '0008'
                         if tracked_train.nil?
-                           puts 'the train_id '+train_id+' has not been activated, so we cant xref with timetables'      unless @quiet                   
+                           puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"      unless @quiet                   
                         else
                            process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
                         end 
                      end
                   end  # if toc = 30
                end  #    msg_list.each do |indiv_msg|
-            end # if msg.header['destination'] ==   '/topic/TRAIN_MVT_ALL_TOC'
+            end # if msg.header['destination'] ==   '/topic/....'
+
+            # perform a clean-up periodically
+            time_since_clean = Time.now - @timelastclean
+            puts Time.now.to_s+' time_since_clean = '+time_since_clean.to_s unless @quiet
+            # we perform the clean up evey 60 secs
+            if time_since_clean > 60
+               puts Time.now.to_s+": checking for legacy entried, removing them if necess" unless @quiet
+               clean_live_feed()
+               @timelastclean = Time.now               
+            end
+
          rescue Exception => e
             puts e.message
-            puts '@current_msg....'
+            puts Time.now.to_s+': @current_msg....'
             p @current_msg            
             emailcontent = 'live feed parser ruby script failed with message' + @current_msg.to_s
             emailheader = 'live feed parser ruby script failed'
@@ -638,7 +689,7 @@ end # Poller module
 EM.run {
 
    @networkrail_feedurl = ARGV[7]
-   puts '@networkrail_feedurl = '+@networkrail_feedurl  unless @quiet
+   puts Time.now.to_s+': @networkrail_feedurl = '+@networkrail_feedurl  unless @quiet
    # EventMachine method - initiates a TCP connection to the remote server and sets up event-handling for the connection
    EM.connect @networkrail_feedurl, 61618, Poller
 }

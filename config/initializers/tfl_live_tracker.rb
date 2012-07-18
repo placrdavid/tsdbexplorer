@@ -1,5 +1,9 @@
 require 'yaml'
 
+# to fix problems related to logging on production / passenger
+# http://stackoverflow.com/questions/9635527/no-log-messages-in-production-log
+Rails.logger.instance_variable_get(:@logger).instance_variable_get(:@log_dest).sync = true if Rails.logger
+
 # get the environment - set verbosity 
 environment = Rails.env.to_s
 verbosity = 'verbose'
