@@ -154,10 +154,11 @@ def prepare_queries()
    find_downstream_locations_excl_sql = "select * from locations where basic_schedule_uuid = $1 and seq > $2 and (public_arrival is not null or public_departure is not null) order by seq"
    @conn.prepare("find_downstream_locations_excl_plan", find_downstream_locations_excl_sql)
 
-   # delete tracked trains older than specified time period
+   # delete tracked trains older than specified time period (we assume that no train journeys are longer than 24hrs)
    tracked_trains_expiry = '1 day'
    #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '1 day'"
-   delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '"+tracked_trains_expiry+"'"
+   #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '"+tracked_trains_expiry+"'"
+   delete_legacy_trackedtrains_sql = "delete from tracked_trains where origin_dep_timestamp < now() - interval '"+tracked_trains_expiry+"'"
    @conn.prepare("delete_legacy_trackedtrains_plan", delete_legacy_trackedtrains_sql)
 
    # delete station_updates older than specified time period
@@ -165,7 +166,6 @@ def prepare_queries()
    delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_expiry+"'"
    #delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '30 minutes'"
    @conn.prepare("delete_legacy_stationupdates_plan", delete_legacy_stationupdates_sql)
-
 
 end
 
@@ -391,7 +391,6 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
          predicted_arrival = calculate_predicted_time_hhmm(planned_arrival, diff_from_timetable_secs.to_i, true)  unless downstream_location['public_arrival'].nil?        
          planned_departure =downstream_location['public_departure'].strip unless downstream_location['public_departure'].nil?
          predicted_departure = calculate_predicted_time_hhmm(planned_departure, diff_from_timetable_secs.to_i, false) unless downstream_location['public_departure'].nil?        
-
    
          @conn.exec_prepared("insert_stationupdate_plan", 
          [tiploc, downstream_location['location_type'], downstream_location['platform'], train_id, 
@@ -663,10 +662,10 @@ module Poller
 
             # perform a clean-up periodically
             time_since_clean = Time.now - @timelastclean
-            puts Time.now.to_s+' time_since_clean = '+time_since_clean.to_s unless @quiet
+            #puts Time.now.to_s+' time_since_clean = '+time_since_clean.to_s +'secs' unless @quiet
             # we perform the clean up evey 60 secs
             if time_since_clean > 60
-               puts Time.now.to_s+": checking for legacy entried, removing them if necess" unless @quiet
+               puts Time.now.to_s+": checking for legacy entries, removing them if necess" unless @quiet
                clean_live_feed()
                @timelastclean = Time.now               
             end
