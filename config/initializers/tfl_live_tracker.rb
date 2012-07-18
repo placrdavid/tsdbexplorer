@@ -38,6 +38,16 @@ error_msg_recipient_email = tsdb_settings['TFL_TRACKER']['error_msg_recipient_em
 ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbosity.to_s+"' '"+host.to_s+"' '"+port.to_s+"' '"+dbname.to_s+"' '"+username.to_s+"' '"+pwd.to_s+"' '"+networkrail_feedurl.to_s+"' '"+networkrail_login.to_s+"' '"+networkrail_passcode.to_s+"' '"+error_msg_recipient_email+"' >> "+logfilepath.to_s+""
 puts 'cmdline to run live trains parser:'
 puts ruby_cmdline_string
+
+# test a new thread to do something simple and testable: create a file
+Thread.new do    
+   tempfilename = Rails.root.to_s + '/'+script_dir+'/'+Time.now.to_i.to_s+'testfile.txt'
+   # Create a new file and write to it  
+   File.open(tempfilename, 'w') do |f2|  
+     f2.puts Time.now.to_s  
+   end  
+end
+
 # start a new thread within which run the background live logger script
 Thread.new do    
    puts 'new thread - about to run live trains parser'
