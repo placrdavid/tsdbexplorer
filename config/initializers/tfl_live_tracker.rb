@@ -1,9 +1,10 @@
-require 'yaml'
+#require 'yaml'
 
 # to fix problems related to logging on production / passenger
 # http://stackoverflow.com/questions/9635527/no-log-messages-in-production-log
 Rails.logger.instance_variable_get(:@logger).instance_variable_get(:@log_dest).sync = true if Rails.logger
 
+=begin
 # get the environment - set verbosity 
 environment = Rails.env.to_s
 verbosity = 'verbose'
@@ -39,9 +40,19 @@ ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbos
 puts 'cmdline to run live trains parser:'
 puts ruby_cmdline_string
 
+puts 'I AM IN THE TFL_LIVE_TRACKER.RB INITIALIZER'
+# test a new thread to do something simple and testable: create a file
+#Thread.new do    
+   tempfilename = Rails.root.to_s + '/'+script_dir+'/'+Time.now.to_i.to_s+Rails.env.to_s+'intialiserNoThread.txt'
+   # Create a new file and write to it  
+   File.open(tempfilename, 'w') do |f2|  
+     f2.puts Time.now.to_s  
+   end  
+#end
+
 # test a new thread to do something simple and testable: create a file
 Thread.new do    
-   tempfilename = Rails.root.to_s + '/'+script_dir+'/'+Time.now.to_i.to_s+'testfile.txt'
+   tempfilename = Rails.root.to_s + '/'+script_dir+'/'+Time.now.to_i.to_s+Rails.env.to_s+'intialiserWithThread.txt'
    # Create a new file and write to it  
    File.open(tempfilename, 'w') do |f2|  
      f2.puts Time.now.to_s  
@@ -50,6 +61,7 @@ end
 
 # start a new thread within which run the background live logger script
 Thread.new do    
-   puts 'new thread - about to run live trains parser'
+#   puts 'new thread - about to run live trains parser'
    `#{ruby_cmdline_string}`
 end
+=end

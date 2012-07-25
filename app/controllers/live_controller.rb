@@ -10,9 +10,17 @@ class LiveController < ApplicationController
    # Return all known live updates for a station, in json format
    def stations_updates_json
 
+      # what to order by? planned_departure by default. Must be one planned/predicted_planned_departure/arrival
+      order_by = 'planned_departure'
+      order_options = ['planned_arrival', 'predicted_arrival', 'planned_departure', 'predicted_departure']
+      unless params[:order_by].nil
+         order_by = params[:order_by] if order_options.include?params[:order_by]
+      end
+
       # Get matching station_updates
       tiploc = params[:tiploc]
-      station_updates = StationUpdate.where(:tiploc_code => tiploc).includes(:tiploc).includes(:tracked_train).order(:predicted_departure)
+      station_updates = StationUpdate.where(:tiploc_code => tiploc).includes(:tiploc).includes(:tracked_train).
+      order(order_by)
       updates_array=[]                 
 
       # for each update, for this station, construct an array of hashes

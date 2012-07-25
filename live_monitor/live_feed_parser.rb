@@ -515,13 +515,13 @@ module Poller
 
    # initialisation steps once we have a connection to apachemq feed
    def connection_completed
-
+      
       # set time of last clean to 24hrs ago
       @timelastclean = Time.now - (60*60*24)
 
       @environment = ARGV[0]
       @quiet = false      
-      @quiet = true if ARGV[1].downcase == 'quiet' if ARGV[1]
+      @quiet = true if ARGV[1].downcase == 'quiet'
       @host = ARGV[2]
       @port = ARGV[3]
       @dbname = ARGV[4]
@@ -562,6 +562,7 @@ module Poller
 #         subscribe '/topic/RTPPM_ALL'
       else
 
+         # any exceptions in this loop are caught and shouldn't stop the script functioning
          begin
 
 #           @timelastmsg = Time.now
@@ -669,12 +670,16 @@ module Poller
                clean_live_feed()
                @timelastclean = Time.now               
             end
-
+         # this 'should' allow the loop to continue, whilst emailing us an alert
          rescue Exception => e
+            # log the exception
+            puts '==============================================='
+            puts 'rescued Exception'
             puts e.message
             puts Time.now.to_s+': @current_msg....'
             p @current_msg            
-            emailcontent = 'live feed parser ruby script failed with message' + @current_msg.to_s
+            # email notice about exception
+            emailcontent = 'live feed parser ruby script failed with message' + e.message.to_s
             emailheader = 'live feed parser ruby script failed'
             `#echo #{emailcontent} | mutt -s #{emailheader} #{@error_msg_recipient_email}`
          end # begin / rescue Exception
