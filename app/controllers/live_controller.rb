@@ -13,7 +13,7 @@ class LiveController < ApplicationController
       # what to order by? planned_departure by default. Must be one planned/predicted_planned_departure/arrival
       order_by = 'planned_departure'
       order_options = ['planned_arrival', 'predicted_arrival', 'planned_departure', 'predicted_departure']
-      unless params[:order_by].nil
+      unless params[:order_by].nil?
          order_by = params[:order_by] if order_options.include?params[:order_by]
       end
 
