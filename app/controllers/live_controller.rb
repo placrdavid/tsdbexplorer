@@ -18,7 +18,11 @@ class LiveController < ApplicationController
       end
 
       # Get matching station_updates
-      tiploc = params[:tiploc]
+      tiploc = params[:tiploc].upcase
+      # the klapham kludge. This is NOT a longterm solution!! But fixes the CRS <-> tiploc conversion problem in the shortterm
+      clapham_tiplocs = [ 'CLPHMJC', 'CLPHMJW', 'CLPHMJM' ]
+      tiploc = 'CLPHMJ2' if clapham_tiplocs.include?(tiploc)
+      
       station_updates = StationUpdate.where(:tiploc_code => tiploc).includes(:tiploc).includes(:tracked_train).
       order(order_by)
       updates_array=[]                 
