@@ -15,7 +15,7 @@ require 'yaml'
 require "pg"
 require "date"
 
-STDOUT.sync = true #fails
+STDOUT.sync = true # 
 
 # get all our cmd line params
 @environment 
@@ -231,6 +231,8 @@ def process_activation_msg(indiv_msg)
       puts Time.now.to_s+': PROBLEM: multiple matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
    end
    puts Time.now.to_s+': -----------0001 msg end--------------' unless @quiet
+   
+   #  process downstream stations: as no report and empty predicted text ? 
 end
 
 # process the 0002 cancellation message
@@ -407,6 +409,8 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
          planned_departure =focal_scheduled_location['public_departure'].strip unless focal_scheduled_location['public_departure'].nil?
          predicted_departure = calculate_predicted_time_hhmm(planned_departure, diff_from_timetable_secs.to_i, false) unless focal_scheduled_location['public_departure'].nil?        
    
+         # TODO: flag 'arrived' - in a dedicated field?
+
          @conn.exec_prepared("insert_stationupdate_plan", 
          [loc_tiploc, focal_scheduled_location['location_type'], 
          focal_scheduled_location['platform'], train_id, 
