@@ -225,6 +225,26 @@ def process_activation_msg(indiv_msg)
       train_call_type, train_uid, train_call_mode, schedule_type, sched_origin_stanox, schedule_wtt_id,  schedule_start_date, origin_dep_hhmm, 
       basic_schedule_uuid, originname, destname, atoc_code, Time.new, Time.new]) 
       puts Time.now.to_s+': 0001 msg - now tracking train_id '+train_id+''        unless @quiet                 
+      
+      # update downstream stations with 'no report?'
+      
+      # find / update downstream stations, and add to station_updates
+      downstream_locations = @conn.exec_prepared("find_downstream_locations_excl_plan", [basic_schedule_uuid, 1]) 
+      downstream_locations.each { |downstream_location| 
+
+         tiploc = downstream_location['tiploc_code']
+         planned_arrival =downstream_location['public_arrival'].strip unless downstream_location['public_arrival'].nil?
+         predicted_arrival = nil
+         planned_departure =downstream_location['public_departure'].strip unless downstream_location['public_departure'].nil?
+         predicted_departure = nil        
+   
+         @conn.exec_prepared("insert_stationupdate_plan", 
+         [tiploc, downstream_location['location_type'], downstream_location['platform'], train_id, 
+         0, planned_arrival, predicted_arrival, planned_departure, predicted_departure, 'ACTIVATION', 
+         nil, nil, Time.new, Time.new])                       
+      }
+      puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations with an activation msg' unless @quiet
+
    elsif  n_matching_uuids==0
       puts Time.now.to_s+': PROBLEM: no matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
    else
@@ -409,8 +429,6 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
          planned_departure =focal_scheduled_location['public_departure'].strip unless focal_scheduled_location['public_departure'].nil?
          predicted_departure = calculate_predicted_time_hhmm(planned_departure, diff_from_timetable_secs.to_i, false) unless focal_scheduled_location['public_departure'].nil?        
    
-         # TODO: flag 'arrived' - in a dedicated field?
-
          @conn.exec_prepared("insert_stationupdate_plan", 
          [loc_tiploc, focal_scheduled_location['location_type'], 
          focal_scheduled_location['platform'], train_id, 
