@@ -431,7 +431,7 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
          [loc_tiploc, focal_scheduled_location['location_type'], 
          focal_scheduled_location['platform'], train_id, 
          diff_from_timetable_secs.to_i, planned_arrival, predicted_arrival, planned_departure, predicted_departure, 
-         event_type, planned_event_type, variation_status, Time.new, Time.new])                          
+         event_type, planned_event_type, 'ARRIVED', Time.new, Time.new])                          
       end
 
    else
