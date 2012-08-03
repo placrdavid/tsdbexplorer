@@ -1,0 +1,11 @@
+# If using RVM to define the ruby version and gemset on your system, define them here.
+#  - If you have not defined a rvm ruby, set RVM_VERSION="default"
+#  - If you have not defined a specific gemset, set GEMSET_VERSION="default"
+RVM_VERSION="default"
+GEMSET_VERSION="default"
+
+# Set the rails environment [development | test | production] and verbosity [normal | quiet]
+#rails_env_value="development"
+rails_env_value="production"
+verbosity_value="normal"
+#verbosity_value="quiet"

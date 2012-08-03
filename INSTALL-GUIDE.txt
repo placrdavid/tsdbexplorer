@@ -95,3 +95,14 @@ You should also edit the TFL_TRACKER settings in the config/tsdbexplorer.yml fil
 The key parameters to change are 'networkrail_login', 'networkrail_passcode' to the credentials you received after registering 
 at datafeeds.networkrail.co.uk, and 'error_msg_recipient_email' to an email address you want to  use to receive email alerts 
 when the feed parsing encounters problems.
+
+----------------------
+Placr fork for live London departures.
+
+To retrieve live train movement updates, and transform them to station arrivals / departures.
+ - complete the TFL_TRACKER values in 'config/tsdbexplorer.yml'
+ - copy template and complete the values to create a 'live_monitor/bash_settings.txt' file
+ - set up a cron job to run the live_feed_runner.sh bash script every few (5?) minutes
+ - to view updates for a station: hostname/live/station/tiplocs.json
+-- David Mountain <david.mountain@placr.co.uk>
+ 

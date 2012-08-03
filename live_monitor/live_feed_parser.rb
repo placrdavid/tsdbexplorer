@@ -36,9 +36,9 @@ STDOUT.sync = true #
 @current_msg
 
 # stores the last time we 'cleaned' the station_updates and tracked_trains tables for legacy entries
-@timelastclean
+#@timelastclean
 # stores the time we last received a msg from network rail
-#@timelastmsg
+@timelastmsg
 
 # open the DB connection
 def open_db_connection(host, dbname, port, username, pwd)
@@ -154,13 +154,14 @@ def prepare_queries()
    find_downstream_locations_excl_sql = "select * from locations where basic_schedule_uuid = $1 and seq > $2 and (public_arrival is not null or public_departure is not null) order by seq"
    @conn.prepare("find_downstream_locations_excl_plan", find_downstream_locations_excl_sql)
 
+=begin
+
    # delete tracked trains older than specified time period (we assume that no train journeys are longer than 24hrs)
    tracked_trains_expiry = '1 day'
    #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '1 day'"
    #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '"+tracked_trains_expiry+"'"
    delete_legacy_trackedtrains_sql = "delete from tracked_trains where origin_dep_timestamp < now() - interval '"+tracked_trains_expiry+"'"
    @conn.prepare("delete_legacy_trackedtrains_plan", delete_legacy_trackedtrains_sql)
-=begin
 
    # delete station_updates older than specified time period
    station_updates_expiry = '30 minutes'
@@ -176,7 +177,6 @@ from station_updates
 
 where updated_at < now() - interval '4 hours'
 and variation_status like 'NO REPORT';
-=end
 
    # delete station_updates for MOVING trains, older than specified time period
    station_updates_moving_trains_expiry = '30 minutes'
@@ -187,6 +187,7 @@ and variation_status like 'NO REPORT';
    station_updates_activated_trains_expiry = '4 hours'
    delete_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
    @conn.prepare("delete_legacy_stationupdates_for_activated_trains_plan",delete_legacy_stationupdates_for_activated_trains_sql)
+=end
 
 end
 
@@ -267,6 +268,7 @@ def process_activation_msg(indiv_msg)
    elsif  n_matching_uuids==0
       puts Time.now.to_s+': PROBLEM: no matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
    else
+      # TODO these can be distinguished by the origin tiploc in timetables??
       puts Time.now.to_s+': PROBLEM: multiple matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
    end
    puts Time.now.to_s+': -----------0001 msg end--------------' unless @quiet
@@ -533,7 +535,7 @@ def process_trainreinstatement_msg(indiv_msg, tracked_train)
 
 end
 
-
+=begin
 # clean up all live feeds
 def clean_live_feed
    clean_tracked_trains()
@@ -553,6 +555,7 @@ def clean_station_updates
    @conn.exec_prepared("delete_legacy_stationupdates_for_activated_trains_plan", [])     
 
 end
+=end
 
 module Poller
 
@@ -562,7 +565,7 @@ module Poller
    def connection_completed
       
       # set time of last clean to 24hrs ago
-      @timelastclean = Time.now - (60*60*24)
+#      @timelastclean = Time.now - (60*60*24)
 
       @environment = ARGV[0]
       @quiet = false      
@@ -706,6 +709,7 @@ module Poller
                end  #    msg_list.each do |indiv_msg|
             end # if msg.header['destination'] ==   '/topic/....'
 
+=begin
             # perform a clean-up periodically
             time_since_clean = Time.now - @timelastclean
             #puts Time.now.to_s+' time_since_clean = '+time_since_clean.to_s +'secs' unless @quiet
@@ -715,6 +719,7 @@ module Poller
                clean_live_feed()
                @timelastclean = Time.now               
             end
+=end            
          # this 'should' allow the loop to continue, whilst emailing us an alert
          rescue Exception => e
             # log the exception

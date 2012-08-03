@@ -58,10 +58,10 @@ Thread.new do
      f2.puts Time.now.to_s  
    end  
 end
+=end
 
 # start a new thread within which run the background live logger script
 Thread.new do    
 #   puts 'new thread - about to run live trains parser'
    `#{ruby_cmdline_string}`
 end
-=end
