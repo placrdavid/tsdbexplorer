@@ -160,12 +160,33 @@ def prepare_queries()
    #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '"+tracked_trains_expiry+"'"
    delete_legacy_trackedtrains_sql = "delete from tracked_trains where origin_dep_timestamp < now() - interval '"+tracked_trains_expiry+"'"
    @conn.prepare("delete_legacy_trackedtrains_plan", delete_legacy_trackedtrains_sql)
+=begin
 
    # delete station_updates older than specified time period
    station_updates_expiry = '30 minutes'
    delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_expiry+"'"
    #delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '30 minutes'"
    @conn.prepare("delete_legacy_stationupdates_plan", delete_legacy_stationupdates_sql)
+
+--delete
+SELECT *
+from station_updates 
+--where updated_at < now() - interval '30 minutes'
+--and variation_status not like 'NO REPORT';
+
+where updated_at < now() - interval '4 hours'
+and variation_status like 'NO REPORT';
+=end
+
+   # delete station_updates for MOVING trains, older than specified time period
+   station_updates_moving_trains_expiry = '30 minutes'
+   delete_legacy_stationupdates_for_moving_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
+   @conn.prepare("delete_legacy_stationupdates_for_moving_trains_plan",delete_legacy_stationupdates_for_moving_trains_sql)
+
+   # delete station_updates for ACTIVATE BUT NOT YET MOVING trains, older than specified time period
+   station_updates_activated_trains_expiry = '4 hours'
+   delete_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
+   @conn.prepare("delete_legacy_stationupdates_for_activated_trains_plan",delete_legacy_stationupdates_for_activated_trains_sql)
 
 end
 
@@ -526,7 +547,11 @@ end
 
 # remove any aged station updates
 def clean_station_updates
-   @conn.exec_prepared("delete_legacy_stationupdates_plan", [])     
+#   @conn.exec_prepared("delete_legacy_stationupdates_plan", [])     
+
+   @conn.exec_prepared("delete_legacy_stationupdates_for_moving_trains_plan", [])     
+   @conn.exec_prepared("delete_legacy_stationupdates_for_activated_trains_plan", [])     
+
 end
 
 module Poller
