@@ -267,9 +267,13 @@ def process_activation_msg(indiv_msg)
       puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations with an activation msg' unless @quiet
    elsif  n_matching_uuids==0
       puts Time.now.to_s+': PROBLEM: no matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
+      p indiv_msg
+      puts '-------'
    else
       # TODO these can be distinguished by the origin tiploc in timetables??
       puts Time.now.to_s+': PROBLEM: multiple matching basic_schedule_uuid for schedule_start_date='+schedule_start_date+' train_service_code ='+train_service_code+' origin_dep_hhmm = '+origin_dep_hhmm+'' 
+      p indiv_msg
+      puts '-------'
    end
    puts Time.now.to_s+': -----------0001 msg end--------------' unless @quiet
    
@@ -654,6 +658,8 @@ module Poller
                      if msg_type == '0002'
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
+                           p indiv_msg
+                           p '------'
                         else
                            process_cancellation_msg(indiv_msg, tracked_train)      
                         end
@@ -662,6 +668,8 @@ module Poller
                      if msg_type == '0003'
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"     unless @quiet                    
+                           p indiv_msg
+                           p '------'
                         else
                            #process_trainmovement_msg(indiv_msg, basic_schedule_uuid)      
                            process_trainmovement_msg(indiv_msg, tracked_train)      
@@ -671,6 +679,8 @@ module Poller
                      if msg_type == '0004'
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"        unless @quiet                 
+                           p indiv_msg
+                           p '------'
                         else
                            process_unidentifiedtrain_msg(indiv_msg, tracked_train)      
                         end                    
@@ -679,6 +689,8 @@ module Poller
                      if msg_type == '0005'                     
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
+                           p indiv_msg
+                           p '------'
                         else
                            process_trainreinstatement_msg(indiv_msg, tracked_train)      
                         end              
@@ -687,6 +699,8 @@ module Poller
                      if msg_type == '0006'
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
+                           p indiv_msg
+                           p '------'
                         else
                            process_trainchangeoforigin_msg(indiv_msg, tracked_train)      
                         end 
@@ -695,6 +709,8 @@ module Poller
                      if msg_type == '0007'
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
+                           p indiv_msg
+                           p '------'
                         else
                            process_trainchangeofidentify_msg(indiv_msg, tracked_train)      
                         end                     
@@ -703,6 +719,8 @@ module Poller
                      if msg_type == '0008'
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"      unless @quiet                   
+                           p indiv_msg
+                           p '------'
                         else
                            process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
                         end 
