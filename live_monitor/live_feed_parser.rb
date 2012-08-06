@@ -444,7 +444,7 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
       
       # for the arrival case, update the current tiploc appropriately
       if event_type == 'ARRIVAL'      
-         puts Time.now.to_s+': ARRIVAL event - adding the focal tiploc' unless @quiet
+         #puts Time.now.to_s+': ARRIVAL event - adding the focal tiploc' unless @quiet
          planned_arrival =focal_scheduled_location['public_arrival'].strip unless focal_scheduled_location['public_arrival'].nil?
          predicted_arrival = calculate_predicted_time_hhmm(planned_arrival, diff_from_timetable_secs.to_i, true)  unless focal_scheduled_location['public_arrival'].nil?        
          planned_departure =focal_scheduled_location['public_departure'].strip unless focal_scheduled_location['public_departure'].nil?
