@@ -64,6 +64,10 @@ def time_last_update()
    else
       return Time.parse(res_latest_update[0]['updated_at'])
    end
+
+#      res_latest_update = @conn.exec_prepared("get_time_last_update_plan", []) 
+#   latest_update = res_latest_update[0]['updated_at']
+#   return Time.parse(latest_update)
 end
 
 # remove any tracked trains that were activated a long time ago
@@ -133,6 +137,12 @@ PID_array = PID.split(' ')
 if PID_array.count>=2
    puts Time.now.to_s+': currently running '+PID_array.count.to_s+' versions of the '+parser_script+' script. Should not happen! ' unless @quiet
 end
+
+# test if the updates are stale
+#latest_update_stale=false
+#last_update_t = time_last_update()
+#secs_since_last_update = Time.now - last_update_t
+#latest_update_stale = true if secs_since_last_update > stale_limit_secs
 
 # test if the updates are stale
 latest_update_stale=false
