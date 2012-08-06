@@ -625,8 +625,10 @@ module Poller
                   if toc_id == '30'
                      msg_type = indiv_msg['header']['msg_type']
 
-                     puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
-      
+                     unless msg_type == '0003' # spare the log
+                        puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
+                     end
+                     
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
                      matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
