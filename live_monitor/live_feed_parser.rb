@@ -318,7 +318,7 @@ end
 # process the 0003 Train Movement message
 def process_trainmovement_msg(indiv_msg, tracked_train)
 
-   puts Time.now.to_s+': -----------0003 msg start--------------' unless @quiet
+   #puts Time.now.to_s+': -----------0003 msg start--------------' unless @quiet
    
    # get the schedule UUID
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']            
@@ -376,13 +376,13 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    journey_complete = false
 
    # various cases can trigger a journey to be complete
-   puts Time.now.to_s+': train_terminated = '+train_terminated unless @quiet
-   puts Time.now.to_s+': event_type = '+event_type unless @quiet
-   puts Time.now.to_s+': planned_event_type = '+planned_event_type unless @quiet
+   #puts Time.now.to_s+': train_terminated = '+train_terminated unless @quiet
+   #puts Time.now.to_s+': event_type = '+event_type unless @quiet
+   #puts Time.now.to_s+': planned_event_type = '+planned_event_type unless @quiet
    if train_terminated == 'true' || event_type == 'DESTINATION' || planned_event_type == 'DESTINATION'
       journey_complete
    end                        
-   puts Time.now.to_s+': journey_complete = '+journey_complete.to_s unless @quiet
+   #puts Time.now.to_s+': journey_complete = '+journey_complete.to_s unless @quiet
 
    # if journey is complete, remove all refs to this train in tracked trains table, and quit this method
    if journey_complete
@@ -440,7 +440,7 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
          diff_from_timetable_secs.to_i, planned_arrival, predicted_arrival, planned_departure, predicted_departure, event_type, planned_event_type, 
          variation_status, Time.new, Time.new])                       
       }
-      puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations downstream of '+loc_tiploc unless @quiet
+      #puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations downstream of '+loc_tiploc unless @quiet
       
       # for the arrival case, update the current tiploc appropriately
       if event_type == 'ARRIVAL'      
@@ -460,7 +460,7 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    else
       puts Time.now.to_s+': not able to update station_updates table' unless @quiet
    end                              
-   puts Time.now.to_s+': -----------0003 msg end--------------' unless @quiet
+   #puts Time.now.to_s+': -----------0003 msg end--------------' unless @quiet
 
 end
 
