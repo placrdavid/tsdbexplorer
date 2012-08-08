@@ -11,9 +11,11 @@ require 'yaml'
 require "pg"
 require 'time'
 
+# flush out output
+STDOUT.sync = true 
 
 # to run script
-#ruby live_feed_runner.rb production verbose '/home/dmm/tfl_live_tsdb/tsdbexplorer'
+#  ruby live_feed_runner.rb production verbose '/home/dmm/tfl_live_tsdb/tsdbexplorer'
 
 @conn # the DB connection
 # how long before we consider data 'stale'
@@ -64,10 +66,6 @@ def time_last_update()
    else
       return Time.parse(res_latest_update[0]['updated_at'])
    end
-
-#      res_latest_update = @conn.exec_prepared("get_time_last_update_plan", []) 
-#   latest_update = res_latest_update[0]['updated_at']
-#   return Time.parse(latest_update)
 end
 
 # remove any tracked trains that were activated a long time ago
@@ -77,11 +75,8 @@ end
 
 # remove any aged station updates
 def clean_station_updates
-#   @conn.exec_prepared("delete_legacy_stationupdates_plan", [])     
-
    @conn.exec_prepared("delete_legacy_stationupdates_for_moving_trains_plan", [])     
    @conn.exec_prepared("delete_legacy_stationupdates_for_activated_trains_plan", [])     
-
 end
 
 # clean up all live feeds
@@ -127,7 +122,6 @@ error_msg_recipient_email = tsdb_settings['TFL_TRACKER']['error_msg_recipient_em
       
 # formulate the cmd line string
 ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbosity.to_s+"' '"+host.to_s+"' '"+port.to_s+"' '"+dbname.to_s+"' '"+username.to_s+"' '"+pwd.to_s+"' '"+networkrail_feedurl.to_s+"' '"+networkrail_login.to_s+"' '"+networkrail_passcode.to_s+"' '"+error_msg_recipient_email+"' >> "+logfilepath.to_s+" &"
-#puts 'cmdline to run live trains parser:' puts ruby_cmdline_string
 
 # get the PID(s), or an empty string ('') if script is not running 
 # *could* be multiple processes, so get as an array
@@ -137,12 +131,6 @@ PID_array = PID.split(' ')
 if PID_array.count>=2
    puts Time.now.to_s+': currently running '+PID_array.count.to_s+' versions of the '+parser_script+' script. Should not happen! ' unless @quiet
 end
-
-# test if the updates are stale
-#latest_update_stale=false
-#last_update_t = time_last_update()
-#secs_since_last_update = Time.now - last_update_t
-#latest_update_stale = true if secs_since_last_update > stale_limit_secs
 
 # test if the updates are stale
 latest_update_stale=false

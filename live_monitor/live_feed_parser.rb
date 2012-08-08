@@ -15,7 +15,7 @@ require 'yaml'
 require "pg"
 require "date"
 
-STDOUT.sync = true # 
+STDOUT.sync = true 
 
 # get all our cmd line params
 @environment 
@@ -78,10 +78,10 @@ end
 #   allow_predicted_before_planned - whether we are allowing predicted times to be in advance of planned
 #                                    whilst a train may arrive early, it should never to depart early
 #   return the predicted time in 'hhmm' (4 chars) string format
+=begin
 def calculate_predicted_time_hhmm(planned_hhmm, secs_offset, allow_predicted_before_planned)
    # if train is on time, return planned   
    if secs_offset==0
-
       return planned_hhmm
    # if train is ontime/early AND we are forcing predicted to not stray behind planned, then return planned time 
    elsif (allow_predicted_before_planned == false && secs_offset<=0)
@@ -96,6 +96,27 @@ def calculate_predicted_time_hhmm(planned_hhmm, secs_offset, allow_predicted_bef
       predicted_time = Time.at((predicted_time.to_f / 60.0).round * 60).utc
       # reformat hhmm and return
       return predicted_time.to_s[11,2] + predicted_time.to_s[14,2]
+   end   
+end
+=end
+
+# Calculates a predicted arrival / departure time as a utc ruby timestamp
+#   planned_time - planned time as utc
+#   secs_offset - the known secs offset from planned. - is ahead of schedule. + is behind schedule
+#   allow_predicted_before_planned - whether we are allowing predicted times to be in advance of planned
+#                                    whilst a train may arrive early, it should never to depart early
+#   return the predicted time  as a utc ruby timestamp
+def calculate_predicted_time(planned_time, secs_offset, allow_predicted_before_planned)
+   # if train is on time, return planned   
+   if secs_offset==0
+      return planned_time
+   # if train is ontime/early AND we are forcing predicted to not stray behind planned, then return planned time 
+   elsif (allow_predicted_before_planned == false && secs_offset<=0)
+      return planned_time
+   else
+      # get planned_time as a ruby Time
+      predicted_time = planned_time + secs_offset
+      return Time.at((predicted_time.to_f / 60.0).round * 60).utc
    end   
 end
 
@@ -138,9 +159,18 @@ def prepare_queries()
    remove_all_stationupdates_for_trainid_sql = "DELETE FROM station_updates WHERE train_id=$1"
    @conn.prepare("remove_all_stationupdates_for_trainid_plan", remove_all_stationupdates_for_trainid_sql)
          
+=begin
    # store a station_update, for stations downstream of the tiploc associated with a train movement
    insert_stationupdate_sql = "INSERT INTO station_updates (tiploc_code, location_type, platform,  train_id,
      diff_from_timetable_secs,  planned_arrival, predicted_arrival,  planned_departure,  predicted_departure,  event_type,  
+     planned_event_type, variation_status, created_at, updated_at) 
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
+   @conn.prepare("insert_stationupdate_plan", insert_stationupdate_sql)
+=end
+
+   # store a station_update, for stations downstream of the tiploc associated with a train movement
+   insert_stationupdate_sql = "INSERT INTO station_updates (tiploc_code, location_type, platform,  train_id,
+     diff_from_timetable_secs,  planned_arrival_timestamp, predicted_arrival_timestamp,  planned_departure_timestamp,  predicted_departure_timestamp,  event_type,  
      planned_event_type, variation_status, created_at, updated_at) 
    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
    @conn.prepare("insert_stationupdate_plan", insert_stationupdate_sql)
@@ -153,41 +183,6 @@ def prepare_queries()
    # find all downstream stations based on basic_schedule_uuid and seq number of current (exclusive of current)
    find_downstream_locations_excl_sql = "select * from locations where basic_schedule_uuid = $1 and seq > $2 and (public_arrival is not null or public_departure is not null) order by seq"
    @conn.prepare("find_downstream_locations_excl_plan", find_downstream_locations_excl_sql)
-
-=begin
-
-   # delete tracked trains older than specified time period (we assume that no train journeys are longer than 24hrs)
-   tracked_trains_expiry = '1 day'
-   #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '1 day'"
-   #delete_legacy_trackedtrains_sql = "delete from tracked_trains where updated_at < now() - interval '"+tracked_trains_expiry+"'"
-   delete_legacy_trackedtrains_sql = "delete from tracked_trains where origin_dep_timestamp < now() - interval '"+tracked_trains_expiry+"'"
-   @conn.prepare("delete_legacy_trackedtrains_plan", delete_legacy_trackedtrains_sql)
-
-   # delete station_updates older than specified time period
-   station_updates_expiry = '30 minutes'
-   delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_expiry+"'"
-   #delete_legacy_stationupdates_sql = "delete from station_updates where updated_at < now() - interval '30 minutes'"
-   @conn.prepare("delete_legacy_stationupdates_plan", delete_legacy_stationupdates_sql)
-
---delete
-SELECT *
-from station_updates 
---where updated_at < now() - interval '30 minutes'
---and variation_status not like 'NO REPORT';
-
-where updated_at < now() - interval '4 hours'
-and variation_status like 'NO REPORT';
-
-   # delete station_updates for MOVING trains, older than specified time period
-   station_updates_moving_trains_expiry = '30 minutes'
-   delete_legacy_stationupdates_for_moving_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
-   @conn.prepare("delete_legacy_stationupdates_for_moving_trains_plan",delete_legacy_stationupdates_for_moving_trains_sql)
-
-   # delete station_updates for ACTIVATE BUT NOT YET MOVING trains, older than specified time period
-   station_updates_activated_trains_expiry = '4 hours'
-   delete_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
-   @conn.prepare("delete_legacy_stationupdates_for_activated_trains_plan",delete_legacy_stationupdates_for_activated_trains_sql)
-=end
 
 end
 
@@ -248,20 +243,35 @@ def process_activation_msg(indiv_msg)
       basic_schedule_uuid, originname, destname, atoc_code, Time.new, Time.new]) 
       puts Time.now.to_s+': 0001 msg - now tracking train_id '+train_id+''        unless @quiet                 
       
+      # get the day that this event was supposed to occur
+      planned_update_event_day= Date.new(origin_dep_timestamp.year, origin_dep_timestamp.month, origin_dep_timestamp.mday)
+
       # update downstream stations with 'no report?'
       # find / update downstream stations, and add to station_updates
       downstream_locations = @conn.exec_prepared("find_downstream_locations_excl_plan", [basic_schedule_uuid, 1]) 
       downstream_locations.each { |downstream_location| 
 
          tiploc = downstream_location['tiploc_code']
-         planned_arrival =downstream_location['public_arrival'].strip unless downstream_location['public_arrival'].nil?
-         predicted_arrival = nil
-         planned_departure =downstream_location['public_departure'].strip unless downstream_location['public_departure'].nil?
-         predicted_departure = nil        
-   
+         
+         # get planned arrival / departure as full timestamps
+         unless downstream_location['public_arrival'].nil?
+            planned_arrival_hhmm = downstream_location['public_arrival'].strip
+            planned_ds_arrival_day = planned_update_event_day
+            planned_ds_arrival_day +=1 if downstream_location['next_day_arrival'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_arrival_ts = Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
+            #predicted_arrival_ts = calculate_predicted_time(planned_arrival_ts, diff_from_timetable_secs,true)
+         end
+         unless downstream_location['public_departure'].nil?
+            planned_departure_hhmm = downstream_location['public_departure'].strip 
+            planned_ds_departure_day = planned_update_event_day
+            planned_ds_departure_day +=1 if downstream_location['next_day_departure'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
+            #predicted_departure_ts = calculate_predicted_time(planned_departure_ts, diff_from_timetable_secs,false)
+         end
+         
          @conn.exec_prepared("insert_stationupdate_plan", 
          [tiploc, downstream_location['location_type'], downstream_location['platform'], train_id, 
-         0, planned_arrival, predicted_arrival, planned_departure, predicted_departure, 'ACTIVATION', 
+         0, planned_arrival_ts, nil, planned_departure_ts, nil, 'ACTIVATION', 
          nil, 'NO REPORT', Time.new, Time.new])                       
       }
       puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations with an activation msg' unless @quiet
@@ -380,13 +390,9 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    journey_complete = false
 
    # various cases can trigger a journey to be complete
-   #puts Time.now.to_s+': train_terminated = '+train_terminated unless @quiet
-   #puts Time.now.to_s+': event_type = '+event_type unless @quiet
-   #puts Time.now.to_s+': planned_event_type = '+planned_event_type unless @quiet
    if train_terminated == 'true' || event_type == 'DESTINATION' || planned_event_type == 'DESTINATION'
       journey_complete
    end                        
-   #puts Time.now.to_s+': journey_complete = '+journey_complete.to_s unless @quiet
 
    # if journey is complete, remove all refs to this train in tracked trains table, and quit this method
    if journey_complete
@@ -404,18 +410,17 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
       puts Time.now.to_s+': PROBLEM: combination of stanox '+loc_stanox.to_s+' and basic_schedule_uuid '+basic_schedule_uuid+' matches '+n_matching_tiploclocations.to_s + ' tiplocs/locations'
    elsif n_matching_tiploclocations ==1
       focal_scheduled_location = tiploclocation_res[0]
-   # TODO catch / handle this event 
    else
-      #puts Time.now.to_s+': PROBLEM: combination of stanox '+loc_stanox.to_s+' and basic_schedule_uuid '+basic_schedule_uuid+' matches '+n_matching_tiploclocations.to_s + ' tiplocs/locations'
-      # TODO  use first for an arrival event, otherwise last?
+      #   use first for an arrival event, otherwise last?
       if event_type == 'ARRIVAL'
-         #puts Time.now.to_s+': arrival event, so using first' unless @quiet
          focal_scheduled_location = tiploclocation_res[0]
       else
-         #puts Time.now.to_s+': not an arrival event, so using last' unless @quiet
          focal_scheduled_location = tiploclocation_res[n_matching_tiploclocations-1]
       end
    end
+
+   # get the day that this event was supposed to occur
+   planned_update_event_day= Date.new(planned_timestamp.year, planned_timestamp.month, planned_timestamp.mday)
 
    # if we have identified the trains location within the schedule
    unless focal_scheduled_location.nil?   
@@ -428,37 +433,62 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
 
       loc_tiploc = focal_scheduled_location['tiploc_code']
       loc_seq =focal_scheduled_location['seq']
+      
+      # track how many days ahead of the planned update date we are, as we traverse route with updates
+      ndays_advanced = 0
+      
       # get the downstream stations...
       # find / update downstream stations, and add to station_updates
       downstream_locations = @conn.exec_prepared("find_downstream_locations_excl_plan", [basic_schedule_uuid, loc_seq]) 
       downstream_locations.each { |downstream_location| 
-
+                  
          tiploc = downstream_location['tiploc_code']
-         planned_arrival =downstream_location['public_arrival'].strip unless downstream_location['public_arrival'].nil?
-         predicted_arrival = calculate_predicted_time_hhmm(planned_arrival, diff_from_timetable_secs.to_i, true)  unless downstream_location['public_arrival'].nil?        
-         planned_departure =downstream_location['public_departure'].strip unless downstream_location['public_departure'].nil?
-         predicted_departure = calculate_predicted_time_hhmm(planned_departure, diff_from_timetable_secs.to_i, false) unless downstream_location['public_departure'].nil?        
-   
+         # get planned arrival / departure as full timestamps
+         unless downstream_location['public_arrival'].nil?
+            planned_arrival_hhmm = downstream_location['public_arrival'].strip
+            planned_ds_arrival_day = planned_update_event_day
+            planned_ds_arrival_day +=1 if downstream_location['next_day_arrival'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_arrival_ts = Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
+            predicted_arrival_ts = calculate_predicted_time(planned_arrival_ts, diff_from_timetable_secs,true)
+         end
+         unless downstream_location['public_departure'].nil?
+            planned_departure_hhmm = downstream_location['public_departure'].strip 
+            planned_ds_departure_day = planned_update_event_day
+            planned_ds_departure_day +=1 if downstream_location['next_day_departure'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
+            predicted_departure_ts = calculate_predicted_time(planned_departure_ts, diff_from_timetable_secs,false)
+         end
+         
          @conn.exec_prepared("insert_stationupdate_plan", 
          [tiploc, downstream_location['location_type'], downstream_location['platform'], train_id, 
-         diff_from_timetable_secs.to_i, planned_arrival, predicted_arrival, planned_departure, predicted_departure, event_type, planned_event_type, 
+         diff_from_timetable_secs.to_i, planned_arrival_ts, predicted_arrival_ts, planned_departure_ts, predicted_departure_ts, event_type, planned_event_type, 
          variation_status, Time.new, Time.new])                       
       }
-      #puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations downstream of '+loc_tiploc unless @quiet
       
       # for the arrival case, update the current tiploc appropriately
       if event_type == 'ARRIVAL'      
-         #puts Time.now.to_s+': ARRIVAL event - adding the focal tiploc' unless @quiet
-         planned_arrival =focal_scheduled_location['public_arrival'].strip unless focal_scheduled_location['public_arrival'].nil?
-         predicted_arrival = calculate_predicted_time_hhmm(planned_arrival, diff_from_timetable_secs.to_i, true)  unless focal_scheduled_location['public_arrival'].nil?        
-         planned_departure =focal_scheduled_location['public_departure'].strip unless focal_scheduled_location['public_departure'].nil?
-         predicted_departure = calculate_predicted_time_hhmm(planned_departure, diff_from_timetable_secs.to_i, false) unless focal_scheduled_location['public_departure'].nil?        
-   
+         # get planned arrival / departure as full timestamps
+         unless focal_scheduled_location['public_arrival'].nil?
+            planned_arrival_hhmm = focal_scheduled_location['public_arrival'].strip
+            planned_ds_arrival_day = planned_update_event_day
+            planned_ds_arrival_day +=1 if focal_scheduled_location['next_day_arrival'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_arrival_ts = Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
+            predicted_arrival_ts = calculate_predicted_time(planned_arrival_ts, diff_from_timetable_secs,true)
+         end
+         unless focal_scheduled_location['public_departure'].nil?
+            planned_departure_hhmm = focal_scheduled_location['public_departure'].strip 
+            planned_ds_departure_day = planned_update_event_day
+            planned_ds_departure_day +=1 if focal_scheduled_location['next_day_departure'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
+            predicted_departure_ts = calculate_predicted_time(planned_departure_ts, diff_from_timetable_secs,false)
+         end
+
          @conn.exec_prepared("insert_stationupdate_plan", 
          [loc_tiploc, focal_scheduled_location['location_type'], 
          focal_scheduled_location['platform'], train_id, 
-         diff_from_timetable_secs.to_i, planned_arrival, predicted_arrival, planned_departure, predicted_departure, 
+         diff_from_timetable_secs.to_i, planned_arrival_ts, predicted_arrival_ts, planned_departure_ts, predicted_departure_ts, 
          event_type, planned_event_type, 'ARRIVED', Time.new, Time.new])                          
+       
       end
 
    else
