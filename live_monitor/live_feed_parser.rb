@@ -35,8 +35,6 @@ STDOUT.sync = true
 # stores the current msg - for debug diagnostics
 @current_msg
 
-# stores the last time we 'cleaned' the station_updates and tracked_trains tables for legacy entries
-#@timelastclean
 # stores the time we last received a msg from network rail
 @timelastmsg
 
@@ -70,35 +68,6 @@ def date_to_hhmm(date)
    hhmm = hh+mm+' '
    return hhmm
 end
-
-
-# Calculates a predicted arrival / departure time and returns as a hhmm string
-#   planned_hhmm - planned time in 'hhmm' (4 chars) string format
-#   secs_offset - the known secs offset from planned. - is ahead of schedule. + is behind schedule
-#   allow_predicted_before_planned - whether we are allowing predicted times to be in advance of planned
-#                                    whilst a train may arrive early, it should never to depart early
-#   return the predicted time in 'hhmm' (4 chars) string format
-=begin
-def calculate_predicted_time_hhmm(planned_hhmm, secs_offset, allow_predicted_before_planned)
-   # if train is on time, return planned   
-   if secs_offset==0
-      return planned_hhmm
-   # if train is ontime/early AND we are forcing predicted to not stray behind planned, then return planned time 
-   elsif (allow_predicted_before_planned == false && secs_offset<=0)
-      return planned_hhmm
-   else
-      # get planned_time as a ruby Time
-      now = Time.now.utc
-      planned_time = Time.new(now.year,now.month,now.mday, planned_hhmm[0, 2].to_i,planned_hhmm[2, 2].to_i,0,0).utc
-      # add offset
-      predicted_time = planned_time + secs_offset
-      # round to nearest minute
-      predicted_time = Time.at((predicted_time.to_f / 60.0).round * 60).utc
-      # reformat hhmm and return
-      return predicted_time.to_s[11,2] + predicted_time.to_s[14,2]
-   end   
-end
-=end
 
 # Calculates a predicted arrival / departure time as a utc ruby timestamp
 #   planned_time - planned time as utc
@@ -158,15 +127,6 @@ def prepare_queries()
    # remove all refs to this train in station_updates table
    remove_all_stationupdates_for_trainid_sql = "DELETE FROM station_updates WHERE train_id=$1"
    @conn.prepare("remove_all_stationupdates_for_trainid_plan", remove_all_stationupdates_for_trainid_sql)
-         
-=begin
-   # store a station_update, for stations downstream of the tiploc associated with a train movement
-   insert_stationupdate_sql = "INSERT INTO station_updates (tiploc_code, location_type, platform,  train_id,
-     diff_from_timetable_secs,  planned_arrival, predicted_arrival,  planned_departure,  predicted_departure,  event_type,  
-     planned_event_type, variation_status, created_at, updated_at) 
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
-   @conn.prepare("insert_stationupdate_plan", insert_stationupdate_sql)
-=end
 
    # store a station_update, for stations downstream of the tiploc associated with a train movement
    insert_stationupdate_sql = "INSERT INTO station_updates (tiploc_code, location_type, platform,  train_id,
@@ -569,28 +529,6 @@ def process_trainreinstatement_msg(indiv_msg, tracked_train)
 
 end
 
-=begin
-# clean up all live feeds
-def clean_live_feed
-   clean_tracked_trains()
-   clean_station_updates()
-end
-
-# remove any tracked trains that were activated a long time ago
-def clean_tracked_trains
-   @conn.exec_prepared("delete_legacy_trackedtrains_plan", [])     
-end
-
-# remove any aged station updates
-def clean_station_updates
-#   @conn.exec_prepared("delete_legacy_stationupdates_plan", [])     
-
-   @conn.exec_prepared("delete_legacy_stationupdates_for_moving_trains_plan", [])     
-   @conn.exec_prepared("delete_legacy_stationupdates_for_activated_trains_plan", [])     
-
-end
-=end
-
 module Poller
 
    include EM::Protocols::Stomp
@@ -598,9 +536,6 @@ module Poller
    # initialisation steps once we have a connection to apachemq feed
    def connection_completed
       
-      # set time of last clean to 24hrs ago
-#      @timelastclean = Time.now - (60*60*24)
-
       @environment = ARGV[0]
       @quiet = false      
       @quiet = true if ARGV[1].downcase == 'quiet'
@@ -647,8 +582,6 @@ module Poller
          # any exceptions in this loop are caught and shouldn't stop the script functioning
          begin
 
-#           @timelastmsg = Time.now
-            
             msg_list = JSON.parse(msg.body)
             if msg.header['destination'] ==   '/topic/TRAIN_MVT_ALL_TOC' || msg.header['destination'] ==   '/topic/TRAIN_MVT_EK_TOC'
                msg_list.each do |indiv_msg|
@@ -668,7 +601,6 @@ module Poller
                      matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
                                       
                      # get the basic_schedule_uuid for this 
-                     #basic_schedule_uuid = nil
                      tracked_train=nil
                      if matching_trackedtrains_res.count.to_i==1
                         tracked_train = matching_trackedtrains_res[0]
@@ -758,18 +690,7 @@ module Poller
                   end  # if toc = 30
                end  #    msg_list.each do |indiv_msg|
             end # if msg.header['destination'] ==   '/topic/....'
-
-=begin
-            # perform a clean-up periodically
-            time_since_clean = Time.now - @timelastclean
-            #puts Time.now.to_s+' time_since_clean = '+time_since_clean.to_s +'secs' unless @quiet
-            # we perform the clean up evey 60 secs
-            if time_since_clean > 60
-               puts Time.now.to_s+": checking for legacy entries, removing them if necess" unless @quiet
-               clean_live_feed()
-               @timelastclean = Time.now               
-            end
-=end            
+           
          # this 'should' allow the loop to continue, whilst emailing us an alert
          rescue Exception => e
             # log the exception
