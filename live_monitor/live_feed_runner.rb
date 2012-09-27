@@ -14,7 +14,7 @@ require 'time'
 # flush out output
 STDOUT.sync = true 
 
-verbose_cleaning = true
+@verbose_cleaning = true
 # to run script
 #  ruby live_feed_runner.rb production verbose '/home/dmm/tfl_live_tsdb/tsdbexplorer'
 
@@ -34,29 +34,29 @@ def close_db_connection()
    @conn.finish
    puts Time.now.to_s+': disconnected from DB' unless @quiet
 end
-tracked_trains_expiry = '1 day'
-station_updates_moving_trains_expiry = '30 minutes'
-station_updates_activated_trains_expiry = '4 hours'
+@tracked_trains_expiry = '1 day'
+@station_updates_moving_trains_expiry = '30 minutes'
+@station_updates_activated_trains_expiry = '4 hours'
 
 # prepare sql statements
 def prepare_sql
 
    # delete tracked trains older than specified time period (we assume that no train journeys are longer than 24hrs)
-   delete_legacy_trackedtrains_sql = "delete from tracked_trains where origin_dep_timestamp < now() - interval '"+tracked_trains_expiry+"'"
+   delete_legacy_trackedtrains_sql = "delete from tracked_trains where origin_dep_timestamp < now() - interval '"+@tracked_trains_expiry+"'"
    @conn.prepare("delete_legacy_trackedtrains_plan", delete_legacy_trackedtrains_sql)
-   select_legacy_trackedtrains_sql = "select * from tracked_trains where origin_dep_timestamp < now() - interval '"+tracked_trains_expiry+"'"
+   select_legacy_trackedtrains_sql = "select * from tracked_trains where origin_dep_timestamp < now() - interval '"+@tracked_trains_expiry+"'"
    @conn.prepare("select_legacy_trackedtrains_plan", select_legacy_trackedtrains_sql)
 
    # delete station_updates for MOVING trains, older than specified time period
-   delete_legacy_stationupdates_for_moving_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
+   delete_legacy_stationupdates_for_moving_trains_sql = "delete from station_updates where updated_at < now() - interval '"+@station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
    @conn.prepare("delete_legacy_stationupdates_for_moving_trains_plan",delete_legacy_stationupdates_for_moving_trains_sql)
-   select_legacy_stationupdates_for_moving_trains_sql = "select * from station_updates where updated_at < now() - interval '"+station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
+   select_legacy_stationupdates_for_moving_trains_sql = "select * from station_updates where updated_at < now() - interval '"+@station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
    @conn.prepare("select_legacy_stationupdates_for_moving_trains_plan",select_legacy_stationupdates_for_moving_trains_sql)
 
    # delete station_updates for ACTIVATE BUT NOT YET MOVING trains, older than specified time period
-   delete_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
+   delete_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+@station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
    @conn.prepare("delete_legacy_stationupdates_for_activated_trains_plan",delete_legacy_stationupdates_for_activated_trains_sql)
-   select_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
+   select_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+@station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
    @conn.prepare("select_legacy_stationupdates_for_activated_trains_plan",select_legacy_stationupdates_for_activated_trains_sql)
 
    # get time of last update
@@ -79,12 +79,12 @@ end
 def clean_tracked_trains
 
    # verbose cleaning - for debug
-   if verbose_cleaning
+   if @verbose_cleaning
       trains_to_clean = @conn.exec_prepared("select_legacy_trackedtrains_plan", [])     
-      puts ""+trains_to_clean.size.to_s+" tracked trains older than "+tracked_trains_expiry+" to clean from DB"
+      puts ""+trains_to_clean.count.to_s+" tracked trains older than "+@tracked_trains_expiry+" to clean from DB"
       trains_to_clean.each { |train_to_clean| 
          puts "---------------------------------------------------------------------"
-         puts "train with train_service_code "+trains_to_clean['train_service_code'].to_s+" will be purged"
+         puts "train with train_service_code "+train_to_clean['train_service_code'].to_s+" will be purged"
          p train_to_clean
          puts "---------------------------------------------------------------------"
       }
@@ -95,9 +95,9 @@ end
 # remove any aged station updates
 def clean_station_updates
    # verbose cleaning - for debug
-   if verbose_cleaning
+   if @verbose_cleaning
       updates_to_clean = @conn.exec_prepared("select_legacy_stationupdates_for_moving_trains_plan", [])     
-      puts ""+updates_to_clean.size.to_s+" station_updates for moving trains older than "+station_updates_moving_trains_expiry+" to clean from DB"
+      puts ""+updates_to_clean.count.to_s+" station_updates for moving trains older than "+@station_updates_moving_trains_expiry+" to clean from DB"
       updates_to_clean.each { |update_to_clean| 
          puts "---------------------------------------------------------------------"
          puts "station update for station tiploc "+update_to_clean['tiploc_code']+" with train_service_code "+update_to_clean['train_service_code'].to_s+" will be purged"
@@ -107,9 +107,9 @@ def clean_station_updates
    end
    @conn.exec_prepared("delete_legacy_stationupdates_for_moving_trains_plan", [])     
       # verbose cleaning - for debug
-   if verbose_cleaning
+   if @verbose_cleaning
       updates_to_clean = @conn.exec_prepared("select_legacy_stationupdates_for_activated_trains_plan", [])     
-      puts ""+updates_to_clean.size.to_s+" station_updates for activated trains older than "+station_updates_activated_trains_expiry+" to clean from DB"
+      puts ""+updates_to_clean.count.to_s+" station_updates for activated trains older than "+@station_updates_activated_trains_expiry+" to clean from DB"
       updates_to_clean.each { |update_to_clean| 
          puts "---------------------------------------------------------------------"
          puts "station update for station tiploc "+update_to_clean['tiploc_code']+" with train_service_code "+update_to_clean['train_service_code'].to_s+" will be purged"
