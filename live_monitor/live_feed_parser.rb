@@ -148,7 +148,7 @@ end
 
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
-   puts Time.now.to_s+': -----------0001 msg start--------------'  unless @quiet
+   puts Time.now.to_s+': -----------0001 msg start--------------'  #unless @quiet
 
    # get / process the fields of the activation msg       
    toc_id = indiv_msg['body']['toc_id']     
@@ -292,7 +292,7 @@ end
 # process the 0003 Train Movement message
 def process_trainmovement_msg(indiv_msg, tracked_train)
 
-   #puts Time.now.to_s+': -----------0003 msg start--------------' unless @quiet
+   puts Time.now.to_s+': -----------0003 msg start--------------' #unless @quiet
    
    # get the schedule UUID
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']            
