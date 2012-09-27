@@ -630,8 +630,13 @@ module Poller
                      if msg_type == '0003'
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"     unless @quiet                    
-                           p indiv_msg
-                           p '------'
+                           if train_id[0] == '2'
+                              puts Time.now.to_s+": Could be a problem - train_id starts with '2'" 
+                              p indiv_msg
+                              p '------'
+                           else
+                              puts Time.now.to_s+": Unlikely to be a problem - train_id doesn't start with '2'"     unless @quiet                    
+                           end
                         else
                            #process_trainmovement_msg(indiv_msg, basic_schedule_uuid)      
                            process_trainmovement_msg(indiv_msg, tracked_train)      
