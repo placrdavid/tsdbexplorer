@@ -253,9 +253,9 @@ end
 # process the 0002 cancellation message
 def process_cancellation_msg(indiv_msg, tracked_train)
 
-   puts Time.now.to_s+': -----------0002 msg start--------------' unless @quiet
-   puts Time.now.to_s+': its a 0002 msg....' unless @quiet
-   p indiv_msg unless @quiet
+   puts Time.now.to_s+': -----------0002 msg start--------------' #unless @quiet
+   puts Time.now.to_s+': its a 0002 msg....' #unless @quiet
+   p indiv_msg #unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
 
@@ -285,7 +285,7 @@ def process_cancellation_msg(indiv_msg, tracked_train)
    @conn.exec_prepared("remove_all_trackedtrains_for_trainid_plan", [train_id]) 
    
    #res = @conn.exec_prepared("insert_0002_msg_plan", [msg_type, train_file_address, train_service_code, orig_loc_stanox, toc_id, dep_timestamp, division_code, loc_stanox, canx_timestamp, canx_reason_code, train_id, orig_loc_timestamp, canx_type, basic_schedule_uuid, Time.new, Time.new]) 
-   puts Time.now.to_s+': -----------0002 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0002 msg end--------------' #unless @quiet
 
 end
 
@@ -462,70 +462,70 @@ end
 # can't do anything with this...
 def process_unidentifiedtrain_msg(indiv_msg, tracked_train)
 
-   puts Time.now.to_s+': -----------0004 msg start--------------' unless @quiet
-   puts Time.now.to_s+': its a 0004 msg....' unless @quiet
-   p indiv_msg unless @quiet
+   puts Time.now.to_s+': -----------0004 msg start--------------' #unless @quiet
+   puts Time.now.to_s+': its a 0004 msg....' #unless @quiet
+   p indiv_msg #unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
    
-   puts Time.now.to_s+': -----------0004 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0004 msg end--------------' #unless @quiet
 end 
 
 # process the 0005 Train Reinstatement message
 # ?
 def process_trainreinstatement_msg(indiv_msg, tracked_train)
-   puts Time.now.to_s+': -----------0005 msg start--------------' unless @quiet
-   puts Time.now.to_s+': its a 0005 msg....' unless @quiet
-   p indiv_msg unless @quiet
+   puts Time.now.to_s+': -----------0005 msg start--------------' #unless @quiet
+   puts Time.now.to_s+': its a 0005 msg....' #unless @quiet
+   p indiv_msg #unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
    
    train_id  = indiv_msg['body']['train_id']
    puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'   unless @quiet
-   puts Time.now.to_s+': -----------0005 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0005 msg end--------------' #unless @quiet
 
 end        
 
 # process the 0006 Train Change of Origin
 # ?
 def process_trainchangeoforigin_msg(indiv_msg, tracked_train)
-   puts Time.now.to_s+': -----------0006 msg start--------------' unless @quiet
-   puts Time.now.to_s+': its a 0006 msg....' unless @quiet
-   p indiv_msg unless @quiet
+   puts Time.now.to_s+': -----------0006 msg start--------------' #unless @quiet
+   puts Time.now.to_s+': its a 0006 msg....' #unless @quiet
+   p indiv_msg #unless @quiet
    
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
       
    train_id = indiv_msg['body']['train_id']
    puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'           unless @quiet                                      
-   puts Time.now.to_s+': -----------0006 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0006 msg end--------------' #unless @quiet
 
 end
 
 # process the 0007 Train Change of Identity message
 # update the train id in trust_feed, tracked_trains and station_updates
 def process_trainchangeofidentify_msg(indiv_msg, tracked_train)
-   puts Time.now.to_s+': -----------0007 msg start--------------' unless @quiet
-   puts Time.now.to_s+': its a 0007 msg....' unless @quiet
-   p indiv_msg unless @quiet
+   puts Time.now.to_s+': -----------0007 msg start--------------' #unless @quiet
+   puts Time.now.to_s+': its a 0007 msg....' #unless @quiet
+   p indiv_msg #unless @quiet
 
    basic_schedule_uuid = tracked_train['basic_schedule_uuid']
    train_id  = indiv_msg['body']['train_id']
    puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'        unless @quiet                                          unless @quiet
 
-   puts Time.now.to_s+': -----------0007 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0007 msg end--------------' #unless @quiet
 
 end
 
 # process the 0008 Train Change of Location message
-def process_trainreinstatement_msg(indiv_msg, tracked_train)
-   puts Time.now.to_s+': -----------0008 msg start--------------' unless @quiet
-   puts Time.now.to_s+': its a 0008 msg....' unless @quiet
-   p indiv_msg unless @quiet
+def process_trainchangeoflocation_msg(indiv_msg, tracked_train)
+   puts Time.now.to_s+': -----------0008 msg start--------------' #unless @quiet
+   puts Time.now.to_s+': its a 0008 msg....' #unless @quiet
+   p indiv_msg #unless @quiet
 
    train_id  = indiv_msg['body']['train_id']
    puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+tracked_train['basic_schedule_uuid']+' so we can ref with timetables'                                                 unless @quiet
    
-   puts Time.now.to_s+': -----------0008 msg end--------------' unless @quiet
+   puts Time.now.to_s+': -----------0008 msg end--------------' #unless @quiet
 
 end
 
