@@ -599,7 +599,7 @@ module Poller
                   if toc_id == '30'
                   
                      msg_type = indiv_msg['header']['msg_type']
-                     puts Time.now.to_s+': toc_id = '+ toc_id.to_s +' and msg_type = '+msg_type.to_s
+                     puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
 
                      unless msg_type == '0003' # spare the log
                         puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
