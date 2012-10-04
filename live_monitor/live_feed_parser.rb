@@ -578,8 +578,8 @@ module Poller
 # All TOCS  feed: London OG timetables (?)
 # London OG feed: All TOCs  timetables (?)
 # All TOCs  feed: All TOCS  timetables (?)
-         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
-#         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
+#         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
+         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
 #         subscribe '/topic/TD_ALL_SIG_AREA'
 #         subscribe '/topic/VSTP_ALL'
 #         subscribe '/topic/TSR_ALL_ROUTE'
