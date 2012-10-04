@@ -563,13 +563,12 @@ module Poller
    end
 
    def receive_msg msg
-   
       
-#     puts Time.now.to_s+': msg received' unless @quiet
+     puts Time.now.to_s+': msg received' unless @quiet
       
       if msg.command == "CONNECTED"
 
-#         puts Time.now.to_s+': got connected - subscribing' unless @quiet
+         puts Time.now.to_s+': got connected - subscribing' unless @quiet
 
 # TODO subscribe
 # TODO try connecting to all?
@@ -578,13 +577,71 @@ module Poller
 # All TOCS  feed: London OG timetables (?)
 # London OG feed: All TOCs  timetables (?)
 # All TOCs  feed: All TOCS  timetables (?)
-         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
+#         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
 #         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
 #         subscribe '/topic/TD_ALL_SIG_AREA'
 #         subscribe '/topic/VSTP_ALL'
 #         subscribe '/topic/TSR_ALL_ROUTE'
 #         subscribe '/topic/RTPPM_ALL'
+
+         subscribe '/topic/TRAIN_MVT_EA_TOC'    # train movements - First Transpennine Express
+         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - London
+         subscribe '/topic/TRAIN_MVT_EJ_TOC'    # train movements - London Midland
+         subscribe '/topic/TRAIN_MVT_HU_TOC'    # train movements - London Southeastern
+         subscribe '/topic/TRAIN_MVT_HA_TOC'    # train movements - First Scotrail
+         subscribe '/topic/TRAIN_MVT_ED_TOC'    # train movements - Northern Rail
+         subscribe '/topic/TRAIN_MVT_XB_TOC'    # train movements - LUL District Line – Wimbledon 
+         subscribe '/topic/TRAIN_MVT_HV_TOC'    # train movements - Gatwick Express Ltd 
+         subscribe '/topic/TRAIN_MVT_PF_TOC'    # train movements - First Hull Trains 
+         subscribe '/topic/TRAIN_MVT_XJ_TOC'    # train movements - Ffestiniog Railway
+         subscribe '/topic/TRAIN_MVT_HL_TOC'    # train movements - Arriva Trains Wales
+         subscribe '/topic/TRAIN_MVT_HM_TOC'    # train movements - Heathrow Express Ltd
+         subscribe '/topic/TRAIN_MVT_PA_TOC'    # train movements - West Coast Railway Co.
+         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - London Overground
+         subscribe '/topic/TRAIN_MVT_HF_TOC'    # train movements - Virgin West Coast Trains
+
+=begin
+First Transpennine Express (EA)
+Train Movements General
+Eurostar (UK) Ltd (GA)
+London Midland (EJ)
+Southeastern (HU)
+First Scotrail (HA)
+Northern Rail (ED)
+LUL District Line – Wimbledon (XB)
+Gatwick Express Ltd (HV)
+First Hull Trains (PF)
+Ffestiniog Railway (XJ)
+Arriva Trains Wales (HL)
+Heathrow Express Ltd (HM)
+West Coast Railway Co. (PA)
+London Overground (EK)
+Virgin West Coast Trains (HF)
+
+Heathrow Connect (EE)
+Grand Central (EC)
+Southern (HW)
+Devon & Cornwall Railways (EN)
+National Express East Coast (HB)
+LUL Bakerloo Line (XC)
+East Midlands Trains (EM)
+First Capital Connect (EG)
+Stagecoach Sth Western Trains Ltd (HY)
+Island Lines (HZ)
+National Express East Anglia (EB)
+North Yorkshire Moors Railway (PR)
+The Chiltern Railway Co. Ltd (HO)
+Merseyrail Electrics 2002 Ltd (HE)
+Wrexham & Shropshire Railway (EI)
+Nexus (PG)
+c2c (HT)
+LUL District Line – Richmond (XE)
+CrossCountry (EH)
+First Great Western (EF)
+=end
+
       else
+
 
          # any exceptions in this loop are caught and shouldn't stop the script functioning
          begin
