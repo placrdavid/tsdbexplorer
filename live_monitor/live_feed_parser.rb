@@ -647,7 +647,7 @@ First Great Western (EF)
          begin
 
             msg_list = JSON.parse(msg.body)
-            if msg.header['destination'] ==   '/topic/TRAIN_MVT_ALL_TOC' || msg.header['destination'] ==   '/topic/TRAIN_MVT_EK_TOC'
+#            if msg.header['destination'] ==   '/topic/TRAIN_MVT_ALL_TOC' || msg.header['destination'] ==   '/topic/TRAIN_MVT_EK_TOC'
                msg_list.each do |indiv_msg|
                
                   # store the current msg for debug diagnostics
@@ -763,7 +763,7 @@ First Great Western (EF)
                      end
                   #end  # if toc = 30
                end  #    msg_list.each do |indiv_msg|
-            end # if msg.header['destination'] ==   '/topic/....'
+            #end # if msg.header['destination'] ==   '/topic/....'
            
          # this 'should' allow the loop to continue, whilst emailing us an alert
          rescue Exception => e
