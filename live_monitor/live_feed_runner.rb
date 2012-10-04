@@ -166,7 +166,7 @@ ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbos
 
 # get the PID(s), or an empty string ('') if script is not running 
 # *could* be multiple processes, so get as an array
-PID=`ps -eo 'tty pid args' | grep '#{parser_script}' | grep -v grep | tr -s ' ' | cut -f2 -d ' '`
+PID=`ps -eo 'tty pid args' | grep '#{scriptpath}' | grep -v grep | tr -s ' ' | cut -f2 -d ' '`
 PID_array = PID.split(' ')
 # if we are running multiple versions of the script - flag this up
 if PID_array.count>=2

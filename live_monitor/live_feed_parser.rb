@@ -571,6 +571,13 @@ module Poller
 
 #         puts Time.now.to_s+': got connected - subscribing' unless @quiet
 
+# TODO subscribe
+# TODO try connecting to all?
+# Tests: for bottle neck
+# London OG feed: London OG timetables (works)
+# All TOCS  feed: London OG timetables (?)
+# London OG feed: All TOCs  timetables (?)
+# All TOCs  feed: All TOCS  timetables (?)
 #         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
          subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
 #         subscribe '/topic/TD_ALL_SIG_AREA'
