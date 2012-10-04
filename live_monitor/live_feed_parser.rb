@@ -578,8 +578,8 @@ module Poller
 # All TOCS  feed: London OG timetables (?)
 # London OG feed: All TOCs  timetables (?)
 # All TOCs  feed: All TOCS  timetables (?)
-#         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
-         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
+         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
+#         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
 #         subscribe '/topic/TD_ALL_SIG_AREA'
 #         subscribe '/topic/VSTP_ALL'
 #         subscribe '/topic/TSR_ALL_ROUTE'
@@ -596,14 +596,14 @@ module Poller
                   # store the current msg for debug diagnostics
                   @current_msg = indiv_msg
                   toc_id = indiv_msg['body']['toc_id']     
-                  if toc_id == '30'
+#                  if toc_id == '30'
                   
                      msg_type = indiv_msg['header']['msg_type']
                      puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
 
-                     unless msg_type == '0003' # spare the log
-                        puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
-                     end
+#                     unless msg_type == '0003' # spare the log
+#                        puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
+#                     end
                      
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
@@ -617,8 +617,11 @@ module Poller
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
+                       puts Time.now.to_s+': 0001 msg for train_id '+train_id+''                                                
+ 
                         # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
+                       puts Time.now.to_s+': about to run '+train_id+''                                                
                            process_activation_msg(indiv_msg)   
                         else
                            puts Time.now.to_s+': PROBLEM!'                                                
@@ -701,7 +704,7 @@ module Poller
                            process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
                         end 
                      end
-                  end  # if toc = 30
+                  #end  # if toc = 30
                end  #    msg_list.each do |indiv_msg|
             end # if msg.header['destination'] ==   '/topic/....'
            
