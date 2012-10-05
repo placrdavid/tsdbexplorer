@@ -51,3 +51,4 @@ TFL_TRACKER:
    networkrail_login: [nil]
    networkrail_passcode: [nil]
    error_msg_recipient_email: [nil]
+   live_feeds: '/topic/TRAIN_MVT_ALL_TOC'

@@ -149,6 +149,9 @@ tsdb_settings = YAML.load_file(File.join(rails_root.to_s+"/config/tsdbexplorer.y
 script_dir = tsdb_settings['TFL_TRACKER']['script_dir']
 parser_script = tsdb_settings['TFL_TRACKER']['parser_script']
 logfile = tsdb_settings['TFL_TRACKER']['logfile']
+live_feeds = tsdb_settings['TFL_TRACKER']['live_feeds']
+#puts 'live feeds '
+#p live_feeds
 
 # networkrail feed credentials
 networkrail_feedurl = tsdb_settings['TFL_TRACKER']['networkrail_feedurl']
@@ -162,7 +165,8 @@ logfilepath = rails_root.to_s + '/'+script_dir+'/'+environment+'-'+logfile
 error_msg_recipient_email = tsdb_settings['TFL_TRACKER']['error_msg_recipient_email']
       
 # formulate the cmd line string
-ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbosity.to_s+"' '"+host.to_s+"' '"+port.to_s+"' '"+dbname.to_s+"' '"+username.to_s+"' '"+pwd.to_s+"' '"+networkrail_feedurl.to_s+"' '"+networkrail_login.to_s+"' '"+networkrail_passcode.to_s+"' '"+error_msg_recipient_email+"' >> "+logfilepath.to_s+" &"
+ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbosity.to_s+"' '"+host.to_s+"' '"+port.to_s+"' '"+dbname.to_s+"' '"+username.to_s+"' '"+pwd.to_s+"' '"+networkrail_feedurl.to_s+"' '"+networkrail_login.to_s+"' '"+networkrail_passcode.to_s+"' '"+error_msg_recipient_email+"' '"+live_feeds.to_s+"' >> "+logfilepath.to_s+" &"
+puts ruby_cmdline_string
 
 # get the PID(s), or an empty string ('') if script is not running 
 # *could* be multiple processes, so get as an array
@@ -206,8 +210,8 @@ end
 
 # if required, restart script
 if restart_script
-   puts Time.now.to_s+': restarting script' unless @quiet
-   `#{ruby_cmdline_string}`
+#  puts Time.now.to_s+': restarting script' unless @quiet
+#   `#{ruby_cmdline_string}`
 else
    puts Time.now.to_s+': updates are fresh and script is running as expected. No restart required' unless @quiet
 end
