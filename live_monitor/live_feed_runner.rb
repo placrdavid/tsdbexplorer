@@ -210,8 +210,8 @@ end
 
 # if required, restart script
 if restart_script
-#  puts Time.now.to_s+': restarting script' unless @quiet
-#   `#{ruby_cmdline_string}`
+  puts Time.now.to_s+': restarting script' unless @quiet
+   `#{ruby_cmdline_string}`
 else
    puts Time.now.to_s+': updates are fresh and script is running as expected. No restart required' unless @quiet
 end
