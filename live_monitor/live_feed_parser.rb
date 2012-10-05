@@ -633,7 +633,7 @@ module Poller
                         # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
                            puts Time.now.to_s+': about to run '+train_id+''                      
-                           t=Thread.new{process_activation_msg(indiv_msg) }
+                           #t=Thread.new{process_activation_msg(indiv_msg) }
                            #t.join
                            #process_activation_msg(indiv_msg)   
                         else
@@ -666,7 +666,7 @@ module Poller
                            end
                         else
                            #process_trainmovement_msg(indiv_msg, tracked_train)      
-                           t=Thread.new{process_trainmovement_msg(indiv_msg, tracked_train)   }
+                           #t=Thread.new{process_trainmovement_msg(indiv_msg, tracked_train)   }
                         end                    
                      end
                      # Message 4 – 0004 – Unidentified Train
