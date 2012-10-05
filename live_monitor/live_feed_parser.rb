@@ -634,7 +634,7 @@ module Poller
                        puts Time.now.to_s+': about to run '+train_id+''                      
                            t=Thread.new{process_activation_msg(indiv_msg) }
                            t.join
-                           process_activation_msg(indiv_msg)   
+                           #process_activation_msg(indiv_msg)   
                         else
                            puts Time.now.to_s+': PROBLEM!'                                                
                            puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
