@@ -149,7 +149,7 @@ end
 
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
-    puts Time.now.to_s+' (thread=)'+Thread.current+': -----------0001 msg start--------------'  unless @quiet
+    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
 
 
    # get / process the fields of the activation msg       
@@ -247,7 +247,7 @@ def process_activation_msg(indiv_msg)
       p indiv_msg
       puts '-------'
    end
-   puts Time.now.to_s+' (thread=)'+Thread.current+': -----------0001 msg end--------------' unless @quiet
+   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg end--------------' unless @quiet
    #
    #  process downstream stations: as no report and empty predicted text ? 
 end
@@ -610,7 +610,7 @@ module Poller
 #                  if toc_id == '30'
                   
                      msg_type = indiv_msg['header']['msg_type']
-                     puts Time.now.to_s+' (thread=)'+Thread.current+': got a '+msg_type.to_s+' msg to process' unless @quiet
+                     puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
 
 #                     unless msg_type == '0003' # spare the log
 #                        puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
@@ -628,7 +628,7 @@ module Poller
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
-                       puts Time.now.to_s+' (thread=)'+Thread.current+': starting multithread 0001 msg for train_id '+train_id+''                                                
+                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': starting multithread 0001 msg for train_id '+train_id+''                                                
  
                         # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
@@ -640,7 +640,7 @@ module Poller
                            puts Time.now.to_s+': PROBLEM!'                                                
                            puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
                         end       
-                       puts Time.now.to_s+' (thread=)'+Thread.current+': finished multithread 0001 msg for train_id '+train_id+''                                                
+                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': finished multithread 0001 msg for train_id '+train_id+''                                                
  
                      end
                      # Message 2 – 0002 – Cancellation
