@@ -531,6 +531,11 @@ def process_trainchangeoflocation_msg(indiv_msg, tracked_train)
 
 end
 
+# a dummy method - can we keep up, when we do no processing at all, but wait for 60 secs
+def sleep60()
+   sleep(60)
+end
+
 module Poller
 
    include EM::Protocols::Stomp
@@ -634,7 +639,7 @@ module Poller
                         if matching_trackedtrains_res.count.to_i == 0
                            puts Time.now.to_s+': about to run '+train_id+''                      
                            #t=Thread.new{process_activation_msg(indiv_msg) }
-                           #t.join
+                           t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
                         else
                            puts Time.now.to_s+': PROBLEM!'                                                
@@ -650,7 +655,8 @@ module Poller
                            p indiv_msg
                            p '------'
                         else
-                           process_cancellation_msg(indiv_msg, tracked_train)      
+                           #process_cancellation_msg(indiv_msg, tracked_train)      
+                           t=Thread.new{sleep60() }
                         end
                      end
                      # Message 3 – 0003 – Train Movement
@@ -667,6 +673,7 @@ module Poller
                         else
                            #process_trainmovement_msg(indiv_msg, tracked_train)      
                            #t=Thread.new{process_trainmovement_msg(indiv_msg, tracked_train)   }
+                           t=Thread.new{sleep60() }
                         end                    
                      end
                      # Message 4 – 0004 – Unidentified Train
@@ -676,7 +683,8 @@ module Poller
                            p indiv_msg
                            p '------'
                         else
-                           process_unidentifiedtrain_msg(indiv_msg, tracked_train)      
+#                           process_unidentifiedtrain_msg(indiv_msg, tracked_train)      
+                           t=Thread.new{sleep60() }
                         end                    
                      end
                      # Message 5 – 0005 – Train Reinstatement
@@ -686,7 +694,8 @@ module Poller
                            p indiv_msg
                            p '------'
                         else
-                           process_trainreinstatement_msg(indiv_msg, tracked_train)      
+#                           process_trainreinstatement_msg(indiv_msg, tracked_train)      
+                           t=Thread.new{sleep60() }
                         end              
                      end
                      # Message 6 – 0006 – Train Change of Origin
@@ -696,7 +705,8 @@ module Poller
                            p indiv_msg
                            p '------'
                         else
-                           process_trainchangeoforigin_msg(indiv_msg, tracked_train)      
+#                           process_trainchangeoforigin_msg(indiv_msg, tracked_train)      
+                           t=Thread.new{sleep60() }
                         end 
                      end
                      # Message 7 – 0007 – Train Change of Identity
@@ -706,7 +716,8 @@ module Poller
                            p indiv_msg
                            p '------'
                         else
-                           process_trainchangeofidentify_msg(indiv_msg, tracked_train)      
+#                           process_trainchangeofidentify_msg(indiv_msg, tracked_train)      
+                           t=Thread.new{sleep60() }
                         end                     
                      end
                      # Message 8 – 0008 – Train Change of Location
@@ -716,7 +727,8 @@ module Poller
                            p indiv_msg
                            p '------'
                         else
-                           process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
+#                           process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
+                           t=Thread.new{sleep60() }
                         end 
                      end
                   #end  # if toc = 30
