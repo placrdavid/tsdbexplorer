@@ -633,7 +633,7 @@ module Poller
                         if matching_trackedtrains_res.count.to_i == 0
                        puts Time.now.to_s+': about to run '+train_id+''                      
                            t=Thread.new{process_activation_msg(indiv_msg) }
-                           t.join
+                           #t.join
                            #process_activation_msg(indiv_msg)   
                         else
                            puts Time.now.to_s+': PROBLEM!'                                                
