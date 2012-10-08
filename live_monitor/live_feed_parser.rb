@@ -600,6 +600,9 @@ module Poller
       # prep our SQL queries
       prepare_queries()     
 
+      Thread.main.priority = Thread.main.priority+1
+
+
       # authent / connect to feed - credentials loaded from a yml
       networkrail_login = 'david.mountain@placr.co.uk'
       networkrail_passcode = 'Thentherewere3;'
@@ -610,8 +613,10 @@ module Poller
    end
 
    def receive_msg msg
-      Thread.main.priority = Thread.main.priority+1
+      #Thread.main.priority = Thread.main.priority+1
       puts Time.now.to_s+':Thread.main.priority = '+Thread.main.priority.to_s unless @quiet
+      nthreads = Thread.list.count()      
+      puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
    
      puts Time.now.to_s+': msg received' unless @quiet
       
@@ -737,9 +742,11 @@ def redis_get_msg(msg_type, train_id)
                        puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': starting multithread 0001 msg for train_id '+train_id+''  
 #                        # if we are not already tracking this train, insert into tracking table, else report an error
 #                        if matching_trackedtrains_res.count.to_i == 0
-                           puts Time.now.to_s+': about to run '+train_id+''   
+#                           puts Time.now.to_s+': about to run a new thread for a 0001 msg '+train_id+''   
                    
                            t=Thread.new{process_activation_msg(indiv_msg) }
+                           nthreads = Thread.list.count()      
+                           puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
                            t.priority = Thread.main.priority - 1
                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                            #t=Thread.new{sleep60() }
@@ -748,7 +755,7 @@ def redis_get_msg(msg_type, train_id)
 #                           puts Time.now.to_s+': PROBLEM!'                                                
 #                           puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
 #                        end       
-                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': finished multithread 0001 msg for train_id '+train_id+''                                                
+#                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': finished multithread 0001 msg for train_id '+train_id+''                                                
  
                      end
 
