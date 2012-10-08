@@ -610,7 +610,9 @@ module Poller
    end
 
    def receive_msg msg
-      
+      Thread.current.priority = Thread.current.priority+1
+      puts Time.now.to_s+':Thread.current.priority = '+Thread.current.priority.to_s unless @quiet
+   
      puts Time.now.to_s+': msg received' unless @quiet
       
       if msg.command == "CONNECTED"
@@ -726,6 +728,7 @@ def redis_get_msg(msg_type, train_id)
                         puts Time.now.to_s+': '+train_id.to_s+' not tracked' unless @quiet                        
                      end
 
+                     puts Time.now.to_s+': Thread.current.priority = '+Thread.current.priority.to_s unless @quiet
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
@@ -733,8 +736,10 @@ def redis_get_msg(msg_type, train_id)
  
                         # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
-                           puts Time.now.to_s+': about to run '+train_id+''                      
+                           puts Time.now.to_s+': about to run '+train_id+''   
+                   
                            t=Thread.new{process_activation_msg(indiv_msg) }
+                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                            #t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
                         else
@@ -754,6 +759,7 @@ def redis_get_msg(msg_type, train_id)
                         else
                            #process_cancellation_msg(indiv_msg, tracked_train)      
                            t=Thread.new{sleep60() }
+                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end
                      end
                      # Message 3 – 0003 – Train Movement
@@ -771,6 +777,7 @@ def redis_get_msg(msg_type, train_id)
                            #process_trainmovement_msg(indiv_msg, tracked_train)      
                            #t=Thread.new{process_trainmovement_msg(indiv_msg, tracked_train)   }
                            t=Thread.new{sleep60() }
+                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end                    
                      end
                      # Message 4 – 0004 – Unidentified Train
