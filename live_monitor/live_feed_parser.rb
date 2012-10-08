@@ -713,6 +713,7 @@ def redis_get_msg(msg_type, train_id)
                      #train_id = indiv_msg['body']['train_id']                     
                      #matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
 
+=begin
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
                      matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
@@ -729,27 +730,29 @@ def redis_get_msg(msg_type, train_id)
                      end
 
                      puts Time.now.to_s+': Thread.current.priority = '+Thread.current.priority.to_s unless @quiet
+=end
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
                        puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': starting multithread 0001 msg for train_id '+train_id+''                                                
- 
-                        # if we are not already tracking this train, insert into tracking table, else report an error
-                        if matching_trackedtrains_res.count.to_i == 0
+st 
+#                        # if we are not already tracking this train, insert into tracking table, else report an error
+#                        if matching_trackedtrains_res.count.to_i == 0
                            puts Time.now.to_s+': about to run '+train_id+''   
                    
                            t=Thread.new{process_activation_msg(indiv_msg) }
                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                            #t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
-                        else
-                           puts Time.now.to_s+': PROBLEM!'                                                
-                           puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
-                        end       
+#                        else
+#                           puts Time.now.to_s+': PROBLEM!'                                                
+#                           puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
+#                        end       
                        puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': finished multithread 0001 msg for train_id '+train_id+''                                                
  
                      end
-                     
+
+=begin                     
                      # Message 2 – 0002 – Cancellation
                      if msg_type == '0002'
                         if tracked_train.nil?
