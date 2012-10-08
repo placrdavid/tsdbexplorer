@@ -740,6 +740,7 @@ def redis_get_msg(msg_type, train_id)
                            puts Time.now.to_s+': about to run '+train_id+''   
                    
                            t=Thread.new{process_activation_msg(indiv_msg) }
+                           t.priority = Thread.current.priority - 1
                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                            #t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
