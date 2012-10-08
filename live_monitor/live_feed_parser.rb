@@ -610,8 +610,8 @@ module Poller
    end
 
    def receive_msg msg
-      Thread.current.priority = Thread.current.priority+1
-      puts Time.now.to_s+':Thread.current.priority = '+Thread.current.priority.to_s unless @quiet
+      Thread.main.priority = Thread.main.priority+1
+      puts Time.now.to_s+':Thread.main.priority = '+Thread.main.priority.to_s unless @quiet
    
      puts Time.now.to_s+': msg received' unless @quiet
       
@@ -740,7 +740,7 @@ def redis_get_msg(msg_type, train_id)
                            puts Time.now.to_s+': about to run '+train_id+''   
                    
                            t=Thread.new{process_activation_msg(indiv_msg) }
-                           t.priority = Thread.current.priority - 1
+                           t.priority = Thread.main.priority - 1
                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                            #t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
