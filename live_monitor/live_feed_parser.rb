@@ -600,7 +600,7 @@ module Poller
       # prep our SQL queries
       prepare_queries()     
 
-      Thread.main.priority = Thread.main.priority+1
+      #Thread.main.priority = Thread.main.priority+1
 
 
       # authent / connect to feed - credentials loaded from a yml
@@ -743,7 +743,8 @@ def redis_get_msg(msg_type, train_id)
 #                        # if we are not already tracking this train, insert into tracking table, else report an error
 #                        if matching_trackedtrains_res.count.to_i == 0
 #                           puts Time.now.to_s+': about to run a new thread for a 0001 msg '+train_id+''   
-                   
+
+=begin                   
                            t=Thread.new{process_activation_msg(indiv_msg) }
                            nthreads = Thread.list.count()      
                            puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
@@ -751,6 +752,15 @@ def redis_get_msg(msg_type, train_id)
                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                            #t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
+=end
+
+                           f= fork {process_activation_msg(indiv_msg) }
+                           nthreads = Thread.list.count()      
+                           puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
+#                           t.priority = Thread.main.priority - 1
+#                           puts Time.now.to_s+': f.priority = '+f.priority.to_s unless @quiet
+
+
 #                        else
 #                           puts Time.now.to_s+': PROBLEM!'                                                
 #                           puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
