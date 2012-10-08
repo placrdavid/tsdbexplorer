@@ -15,6 +15,10 @@ require 'yaml'
 require "pg"
 require "date"
 
+require 'redis'
+
+
+
 STDOUT.sync = true 
 
 # get all our cmd line params
@@ -37,6 +41,10 @@ STDOUT.sync = true
 
 # stores the time we last received a msg from network rail
 @timelastmsg
+
+#
+@redis
+
 
 # open the DB connection
 def open_db_connection(host, dbname, port, username, pwd)
@@ -146,6 +154,33 @@ def prepare_queries()
    @conn.prepare("find_downstream_locations_excl_plan", find_downstream_locations_excl_sql)
 
 end
+
+# cache a msg
+def redis_store_msg(msg_type, indiv_msg)
+   redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+indiv_msg['body']['train_id'].to_s
+#   puts Time.now.to_s+' caching pair with key '+redis_key.to_s  unless @quiet   
+   @redis[redis_key] = indiv_msg.to_json   
+   puts Time.now.to_s+' stored msg to redis with key = '+redis_key.to_s  unless @quiet      
+
+#   retrieved_msg_json = @redis[redis_key]
+#   retrieved_msg_hash = JSON.parse(retrieved_msg_json)
+#   retrieved_train_id = retrieved_msg_hash['body']['train_id'].to_s
+#   puts Time.now.to_s+' train_id = '+retrieved_train_id.to_s  unless @quiet      
+end
+
+# get a messages, by type
+def redis_get_msg(msg_type, train_id)
+   redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+train_id.to_s
+#   puts Time.now.to_s+' caching pair with key '+redis_key.to_s  unless @quiet   
+#   @redis[redis_key] = indiv_msg.to_json   
+   retrieved_msg_json = @redis[redis_key]
+   retrieved_msg_hash = JSON.parse(retrieved_msg_json)
+   return retrieved_msg_hash
+#   retrieved_train_id = retrieved_msg_hash['body']['train_id'].to_s
+#   puts Time.now.to_s+' train_id = '+retrieved_train_id.to_s  unless @quiet      
+end
+
+
 
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
@@ -290,6 +325,8 @@ def process_cancellation_msg(indiv_msg, tracked_train)
    puts Time.now.to_s+': -----------0002 msg end--------------' #unless @quiet
 
 end
+
+
 
 # process the 0003 Train Movement message
 def process_trainmovement_msg(indiv_msg, tracked_train)
@@ -556,6 +593,10 @@ module Poller
       @error_msg_recipient_email = ARGV[10] 
       subscribed_feeds_string = ARGV[11] 
       @subscribed_feeds = subscribed_feeds_string.split(',')
+      
+      @redis = Redis.new
+
+
 
       open_db_connection(@host, @dbname, @port, @dbusername, @dbuserpwd)      
       # prep our SQL queries
@@ -615,12 +656,39 @@ module Poller
 #                  if toc_id == '30'
                   
                      msg_type = indiv_msg['header']['msg_type']
-                     puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
+                     puts Time.now.to_s+' (thread='+Thread.current.to_s+'): got a '+msg_type.to_s+' msg to process' unless @quiet
 
 #                     unless msg_type == '0003' # spare the log
 #                        puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
 #                     end
                      
+=begin
+# check if already stored...                     
+# cache a msg
+#def redis_store_msg(msg_type, indiv_msg)
+   redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+indiv_msg['body']['train_id'].to_s
+#   puts Time.now.to_s+' caching pair with key '+redis_key.to_s  unless @quiet   
+   @redis[redis_key] = indiv_msg.to_json   
+   puts Time.now.to_s+' stored msg to redis with key = '+redis_key.to_s  unless @quiet      
+
+#   retrieved_msg_json = @redis[redis_key]
+#   retrieved_msg_hash = JSON.parse(retrieved_msg_json)
+#   retrieved_train_id = retrieved_msg_hash['body']['train_id'].to_s
+#   puts Time.now.to_s+' train_id = '+retrieved_train_id.to_s  unless @quiet      
+end
+
+# get a messages, by type
+def redis_get_msg(msg_type, train_id)
+   redis_key=  'msg:'+msg_type.to_s+ ':tr
+=end   
+                     
+                     # redis cache
+                     #puts 'msg_type = '+msg_type.to_s
+                     #puts 'indiv_msg = '
+                     #p indiv_msg
+                     redis_store_msg(msg_type, indiv_msg)
+                     
+=begin
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
                      matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
@@ -638,8 +706,8 @@ module Poller
                         # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
                            puts Time.now.to_s+': about to run '+train_id+''                      
-                           t=Thread.new{process_activation_msg(indiv_msg) }
-                           #t=Thread.new{sleep60() }
+                           #t=Thread.new{process_activation_msg(indiv_msg) }
+                           t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
                         else
                            puts Time.now.to_s+': PROBLEM!'                                                
@@ -732,6 +800,7 @@ module Poller
                         end 
                      end
                   #end  # if toc = 30
+=end
                end  #    msg_list.each do |indiv_msg|
             #end # if msg.header['destination'] ==   '/topic/....'
            
