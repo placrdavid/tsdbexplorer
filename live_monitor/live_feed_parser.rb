@@ -710,7 +710,7 @@ def redis_get_msg(msg_type, train_id)
                      #end
 
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
-                     #train_id = indiv_msg['body']['train_id']                     
+                     train_id = indiv_msg['body']['train_id']                     
                      #matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
 
 =begin
