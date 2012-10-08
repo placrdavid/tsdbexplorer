@@ -734,8 +734,7 @@ def redis_get_msg(msg_type, train_id)
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
-                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': starting multithread 0001 msg for train_id '+train_id+''                                                
-st 
+                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': starting multithread 0001 msg for train_id '+train_id+''  
 #                        # if we are not already tracking this train, insert into tracking table, else report an error
 #                        if matching_trackedtrains_res.count.to_i == 0
                            puts Time.now.to_s+': about to run '+train_id+''   
