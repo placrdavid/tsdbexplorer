@@ -158,26 +158,24 @@ end
 # cache a msg
 def redis_store_msg(msg_type, indiv_msg)
    redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+indiv_msg['body']['train_id'].to_s
-#   puts Time.now.to_s+' caching pair with key '+redis_key.to_s  unless @quiet   
    @redis[redis_key] = indiv_msg.to_json   
    puts Time.now.to_s+' stored msg to redis with key = '+redis_key.to_s  unless @quiet      
 
-#   retrieved_msg_json = @redis[redis_key]
-#   retrieved_msg_hash = JSON.parse(retrieved_msg_json)
-#   retrieved_train_id = retrieved_msg_hash['body']['train_id'].to_s
-#   puts Time.now.to_s+' train_id = '+retrieved_train_id.to_s  unless @quiet      
 end
 
 # get a messages, by type
 def redis_get_msg(msg_type, train_id)
    redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+train_id.to_s
-#   puts Time.now.to_s+' caching pair with key '+redis_key.to_s  unless @quiet   
-#   @redis[redis_key] = indiv_msg.to_json   
    retrieved_msg_json = @redis[redis_key]
-   retrieved_msg_hash = JSON.parse(retrieved_msg_json)
-   return retrieved_msg_hash
-#   retrieved_train_id = retrieved_msg_hash['body']['train_id'].to_s
-#   puts Time.now.to_s+' train_id = '+retrieved_train_id.to_s  unless @quiet      
+   if retrieved_msg_json.nil?
+      puts Time.now.to_s+' no msg has key = '+redis_key.to_s  unless @quiet     
+      return nil 
+   else
+      puts Time.now.to_s+' we have a msg with key = '+redis_key.to_s  unless @quiet     
+      retrieved_msg_hash = JSON.parse(retrieved_msg_json)
+      return retrieved_msg_hash
+   end
+   
 end
 
 
@@ -682,12 +680,35 @@ def redis_get_msg(msg_type, train_id)
    redis_key=  'msg:'+msg_type.to_s+ ':tr
 =end   
                      
+                     
                      # redis cache
                      #puts 'msg_type = '+msg_type.to_s
                      #puts 'indiv_msg = '
                      #p indiv_msg
+                     # are we tracking this msg?
+                     # get a messages, by type
+                     train_id = indiv_msg['body']['train_id']   
+                     puts Time.now.to_s+' (thread='+Thread.current.to_s+'): train_id '+train_id.to_s+'' unless @quiet
+                     activation_msg = redis_get_msg('0001', train_id)
+                     if activation_msg.nil?
+                        puts Time.now.to_s+': not tracked' unless @quiet                        
+                     else                     
+                        puts Time.now.to_s+': we are tracking' unless @quiet                        
+                     end
+                     #puts Time.now.to_s+' (thread='+Thread.current.to_s+'): activation_msg '+activation_msg.to_s+' ' unless @quiet
+
+                     # store this msg
                      redis_store_msg(msg_type, indiv_msg)
-                     
+
+                     # if its not an activation msgs, are we tracking it
+                     #if msg_type != '0001'                     
+                     #   puts Time.now.to_s+' not an activation msg'  unless @quiet
+                     #end
+
+                     # get the train id from the msg, and check if it has been initialised by a 0001 msg
+                     #train_id = indiv_msg['body']['train_id']                     
+                     #matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
+
 =begin
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
