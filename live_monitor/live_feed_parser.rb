@@ -687,6 +687,7 @@ def redis_get_msg(msg_type, train_id)
                      #p indiv_msg
                      # are we tracking this msg?
                      # get a messages, by type
+=begin                     
                      train_id = indiv_msg['body']['train_id']   
                      puts Time.now.to_s+' (thread='+Thread.current.to_s+'): train_id '+train_id.to_s+'' unless @quiet
                      activation_msg = redis_get_msg('0001', train_id)
@@ -699,6 +700,7 @@ def redis_get_msg(msg_type, train_id)
 
                      # store this msg
                      redis_store_msg(msg_type, indiv_msg)
+=end                     
 
                      # if its not an activation msgs, are we tracking it
                      #if msg_type != '0001'                     
@@ -709,7 +711,6 @@ def redis_get_msg(msg_type, train_id)
                      #train_id = indiv_msg['body']['train_id']                     
                      #matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
 
-=begin
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
                      matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
@@ -718,7 +719,13 @@ def redis_get_msg(msg_type, train_id)
                      tracked_train=nil
                      if matching_trackedtrains_res.count.to_i==1
                         tracked_train = matching_trackedtrains_res[0]
+                        puts Time.now.to_s+': '+train_id.to_s+' is tracked' unless @quiet                        
                      end
+                     
+                     if matching_trackedtrains_res.count.to_i==0
+                        puts Time.now.to_s+': '+train_id.to_s+' not tracked' unless @quiet                        
+                     end
+
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
@@ -737,6 +744,8 @@ def redis_get_msg(msg_type, train_id)
                        puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': finished multithread 0001 msg for train_id '+train_id+''                                                
  
                      end
+=begin
+                     
                      # Message 2 – 0002 – Cancellation
                      if msg_type == '0002'
                         if tracked_train.nil?
