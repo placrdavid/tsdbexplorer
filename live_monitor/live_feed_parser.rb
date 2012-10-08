@@ -734,8 +734,8 @@ def redis_get_msg(msg_type, train_id)
                         # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
                            puts Time.now.to_s+': about to run '+train_id+''                      
-                           #t=Thread.new{process_activation_msg(indiv_msg) }
-                           t=Thread.new{sleep60() }
+                           t=Thread.new{process_activation_msg(indiv_msg) }
+                           #t=Thread.new{sleep60() }
                            #process_activation_msg(indiv_msg)   
                         else
                            puts Time.now.to_s+': PROBLEM!'                                                
@@ -744,7 +744,6 @@ def redis_get_msg(msg_type, train_id)
                        puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': finished multithread 0001 msg for train_id '+train_id+''                                                
  
                      end
-=begin
                      
                      # Message 2 – 0002 – Cancellation
                      if msg_type == '0002'
@@ -830,6 +829,8 @@ def redis_get_msg(msg_type, train_id)
                         end 
                      end
                   #end  # if toc = 30
+=begin
+
 =end
                end  #    msg_list.each do |indiv_msg|
             #end # if msg.header['destination'] ==   '/topic/....'
