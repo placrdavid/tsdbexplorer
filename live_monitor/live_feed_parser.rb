@@ -183,7 +183,9 @@ end
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
     puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
-
+    puts Time.now.to_s+' indiv_msg s'  unless @quiet
+      p indiv_msg
+    puts Time.now.to_s+' indiv_msg e'  unless @quiet
 
    # get / process the fields of the activation msg       
    toc_id = indiv_msg['body']['toc_id']     
@@ -776,8 +778,8 @@ def redis_get_msg(msg_type, train_id)
 =end
 
 # try spawn
-                           opblock_0001 = EM.spawn { |msg|
-                              process_activation_msg(msg)
+                           opblock_0001 = EM.spawn { |indiv_msg|
+                              process_activation_msg(indiv_msg)
                            }
                            opblock_0001.notify indiv_msg
 
