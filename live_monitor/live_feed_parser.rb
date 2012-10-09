@@ -183,7 +183,7 @@ end
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
 
-   conn = PGconn.open(:host=> host, :user => username, :password => pwd, :dbname => dbname, :port => port)
+   conn = PGconn.open(:host=> @host, :user => @dbusername, :password => @dbuserpwd, :dbname => @dbname, :port => @port)
    get_basic_schedule_uuid_for_activation_msg_sql = "
    SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
    conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
