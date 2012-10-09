@@ -102,9 +102,9 @@ end
 def prepare_queries()
 
    # get basic_schedule uuid for an activation msg
-   get_basic_schedule_uuid_for_activation_msg_sql = "
-   SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
-   @conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
+   #get_basic_schedule_uuid_for_activation_msg_sql = "
+   #SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
+   #@conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
 
    # find matching tracked trains by train_id
    get_matching_tracked_train_by_trainid_sql = "SELECT * FROM tracked_trains WHERE train_id =$1"
@@ -182,6 +182,13 @@ end
 
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
+
+   conn = PGconn.open(:host=> host, :user => username, :password => pwd, :dbname => dbname, :port => port)
+   get_basic_schedule_uuid_for_activation_msg_sql = "
+   SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
+   conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
+
+
     puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
     puts Time.now.to_s+' indiv_msg s'  unless @quiet
       p indiv_msg
@@ -219,7 +226,8 @@ def process_activation_msg(indiv_msg)
    # get the get_basic_schedule_uuid that matches this activation msg
    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... looking up activated train in DB .....'  unless @quiet
 
-   matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
+   #matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
+   matching_uuid_res = conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
    n_matching_uuids = matching_uuid_res.count
    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... finished looking up activated train in DB .....'  unless @quiet
    
@@ -769,20 +777,21 @@ def redis_get_msg(msg_type, train_id)
 #                           process_activation_msg(indiv_msg)   
 
 
-=begin
+#=begin
 # event machine still blocks...
                            opblock_0001 = proc {
                               process_activation_msg(indiv_msg)
                            }
                            EventMachine.defer(opblock_0001)   
-=end
+#=end
 
+=begin
 # try spawn
                            opblock_0001 = EM.spawn { |indiv_msg|
                               process_activation_msg(indiv_msg)
                            }
                            opblock_0001.notify indiv_msg
-
+=end
 
 #                        else
 #                           puts Time.now.to_s+': PROBLEM!'                                                
