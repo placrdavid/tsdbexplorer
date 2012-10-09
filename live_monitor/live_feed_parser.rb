@@ -766,14 +766,15 @@ def redis_get_msg(msg_type, train_id)
 #                           puts Time.now.to_s+': f.priority = '+f.priority.to_s unless @quiet
 #                           process_activation_msg(indiv_msg)   
 
-                           opblock_0001 = Proc.new {
+#                           opblock_0001 = Proc.new {
+                           opblock_0001 = proc {
                               process_activation_msg(indiv_msg)
                            }
-                           callbackblock_0001 = Proc.new { }
+                           #callbackblock_0001 = Proc.new { }
                            
 
 
-                           EventMachine.defer(opblock_0001, callbackblock_0001)   
+                           EventMachine.defer(opblock_0001)   
 
 
 #                        else
