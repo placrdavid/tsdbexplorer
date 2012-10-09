@@ -779,7 +779,7 @@ def redis_get_msg(msg_type, train_id)
                            opblock_0001 = EM.spawn { |msg|
                               process_activation_msg(msg)
                            }
-                           opblock_0001(indiv_msg)
+                           opblock_0001.notify indiv_msg
 
 
 #                        else
