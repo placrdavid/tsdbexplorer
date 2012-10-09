@@ -574,6 +574,7 @@ end
 module Poller
 
    include EM::Protocols::Stomp
+   include EM::Deferrable
 
    # initialisation steps once we have a connection to apachemq feed
    def connection_completed
@@ -613,6 +614,7 @@ module Poller
    end
 
    def receive_msg msg
+   
       #Thread.main.priority = Thread.main.priority+1
       puts Time.now.to_s+':Thread.main.priority = '+Thread.main.priority.to_s unless @quiet
       nthreads = Thread.list.count()      
@@ -754,11 +756,21 @@ def redis_get_msg(msg_type, train_id)
                            #process_activation_msg(indiv_msg)   
 =end
 
-                           f= fork {process_activation_msg(indiv_msg) }
-                           nthreads = Thread.list.count()      
-                           puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
+#                           f= fork {process_activation_msg(indiv_msg) }
+#                           nthreads = Thread.list.count()      
+#                           puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
 #                           t.priority = Thread.main.priority - 1
 #                           puts Time.now.to_s+': f.priority = '+f.priority.to_s unless @quiet
+#                           process_activation_msg(indiv_msg)   
+
+                           opblock_0001 = Proc.new {
+                              process_activation_msg(indiv_msg)
+                           }
+                           callbackblock_0001 = Proc.new { }
+                           
+
+
+                           EventMachine.defer(opblock_0001, callbackblock_0001)   
 
 
 #                        else
@@ -889,5 +901,7 @@ EM.run {
    # EventMachine method - initiates a TCP connection to the remote server and sets up event-handling for the connection
    EM.connect @networkrail_feedurl, 61618, Poller
 }
+
+
 
 
