@@ -106,6 +106,10 @@ def prepare_queries()
    #SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
    #@conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
 
+   get_basic_schedule_uuid_for_activation_msg_sql = "
+   select * from basic_schedules where train_uid = $1 and $2 BETWEEN runs_from AND runs_to"
+   @conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
+
    # find matching tracked trains by train_id
    get_matching_tracked_train_by_trainid_sql = "SELECT * FROM tracked_trains WHERE train_id =$1"
    @conn.prepare("get_matching_tracked_train_by_trainid_plan", get_matching_tracked_train_by_trainid_sql)
@@ -183,10 +187,10 @@ end
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
 
-   conn = PGconn.open(:host=> @host, :user => @dbusername, :password => @dbuserpwd, :dbname => @dbname, :port => @port)
-   get_basic_schedule_uuid_for_activation_msg_sql = "
-   SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
-   conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
+#   conn = PGconn.open(:host=> @host, :user => @dbusername, :password => @dbuserpwd, :dbname => @dbname, :port => @port)
+#   get_basic_schedule_uuid_for_activation_msg_sql = "
+#   SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
+#   conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
 
 
     puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
@@ -227,7 +231,9 @@ def process_activation_msg(indiv_msg)
    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... looking up activated train in DB .....'  unless @quiet
 
    #matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
-   matching_uuid_res = conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
+   #matching_uuid_res = conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
+
+   matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [train_uid, '12-10-2012']) 
    n_matching_uuids = matching_uuid_res.count
    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... finished looking up activated train in DB .....'  unless @quiet
    
