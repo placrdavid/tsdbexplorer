@@ -215,8 +215,11 @@ def process_activation_msg(indiv_msg)
    origin_dep_hhmm = date_to_hhmm(origin_dep_timestamp)
 
    # get the get_basic_schedule_uuid that matches this activation msg
+   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... looking up activated train in DB .....'  unless @quiet
+
    matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
    n_matching_uuids = matching_uuid_res.count
+   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... finished looking up activated train in DB .....'  unless @quiet
    
    # there should be one matching code, else we have a problem
    if n_matching_uuids==1
@@ -232,10 +235,10 @@ def process_activation_msg(indiv_msg)
       originname = resorigin[0]['tps_description']
 
       # insert into tracking table
-#      res = @conn.exec_prepared("store_activation_msg_plan", [msg_type, schedule_source, train_file_address, schedule_end_date, train_id, tp_origin_timestamp, 
-#      creation_timestamp, tp_origin_stanox, origin_dep_timestamp, train_service_code, toc_id, d1266_record_number, 
-#      train_call_type, train_uid, train_call_mode, schedule_type, sched_origin_stanox, schedule_wtt_id,  schedule_start_date, origin_dep_hhmm, 
-#      basic_schedule_uuid, originname, destname, atoc_code, Time.new, Time.new]) 
+      res = @conn.exec_prepared("store_activation_msg_plan", [msg_type, schedule_source, train_file_address, schedule_end_date, train_id, tp_origin_timestamp, 
+      creation_timestamp, tp_origin_stanox, origin_dep_timestamp, train_service_code, toc_id, d1266_record_number, 
+      train_call_type, train_uid, train_call_mode, schedule_type, sched_origin_stanox, schedule_wtt_id,  schedule_start_date, origin_dep_hhmm, 
+      basic_schedule_uuid, originname, destname, atoc_code, Time.new, Time.new]) 
       puts Time.now.to_s+': 0001 msg - now tracking train_id '+train_id+''        unless @quiet                 
       
       # get the day that this event was supposed to occur
@@ -264,10 +267,10 @@ def process_activation_msg(indiv_msg)
             #predicted_departure_ts = calculate_predicted_time(planned_departure_ts, diff_from_timetable_secs,false)
          end
          
-#         @conn.exec_prepared("insert_stationupdate_plan", 
-#         [tiploc, downstream_location['location_type'], downstream_location['platform'], train_id, 
-#         0, planned_arrival_ts, nil, planned_departure_ts, nil, 'ACTIVATION', 
-#         nil, 'NO REPORT', Time.new, Time.new])                       
+         @conn.exec_prepared("insert_stationupdate_plan", 
+         [tiploc, downstream_location['location_type'], downstream_location['platform'], train_id, 
+         0, planned_arrival_ts, nil, planned_departure_ts, nil, 'ACTIVATION', 
+         nil, 'NO REPORT', Time.new, Time.new])                       
       }
       puts Time.now.to_s+': updated = '+downstream_locations.count.to_s+' stations with an activation msg' unless @quiet
    elsif  n_matching_uuids==0
