@@ -817,7 +817,7 @@ def redis_get_msg(msg_type, train_id)
                         else
                            process_cancellation_msg(indiv_msg, tracked_train)      
 #                           t=Thread.new{sleep60() }
-                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
+#                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end
                      end
                      # Message 3 – 0003 – Train Movement
@@ -841,7 +841,7 @@ def redis_get_msg(msg_type, train_id)
 
 
 #                           t=Thread.new{sleep60() }
-                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
+#                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end                    
                      end
                      # Message 4 – 0004 – Unidentified Train
