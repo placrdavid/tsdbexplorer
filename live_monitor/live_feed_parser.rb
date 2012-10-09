@@ -616,9 +616,9 @@ module Poller
    def receive_msg msg
    
       #Thread.main.priority = Thread.main.priority+1
-      puts Time.now.to_s+':Thread.main.priority = '+Thread.main.priority.to_s unless @quiet
-      nthreads = Thread.list.count()      
-      puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
+      #puts Time.now.to_s+':Thread.main.priority = '+Thread.main.priority.to_s unless @quiet
+      #nthreads = Thread.list.count()      
+      #puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
    
      puts Time.now.to_s+': msg received' unless @quiet
       
