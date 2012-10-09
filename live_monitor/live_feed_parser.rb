@@ -736,10 +736,10 @@ def redis_get_msg(msg_type, train_id)
                      #end
 
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
-                     train_id = indiv_msg['body']['train_id']                     
+#                     train_id = indiv_msg['body']['train_id']                     
                      #matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
 
-=begin
+#=begin
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
                      matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
@@ -751,12 +751,12 @@ def redis_get_msg(msg_type, train_id)
                         puts Time.now.to_s+': '+train_id.to_s+' is tracked' unless @quiet                        
                      end
                      
-                     if matching_trackedtrains_res.count.to_i==0
-                        puts Time.now.to_s+': '+train_id.to_s+' not tracked' unless @quiet                        
-                     end
+#                     if matching_trackedtrains_res.count.to_i==0
+#                        puts Time.now.to_s+': '+train_id.to_s+' not tracked' unless @quiet                        
+#                     end
 
-                     puts Time.now.to_s+': Thread.current.priority = '+Thread.current.priority.to_s unless @quiet
-=end
+#                     puts Time.now.to_s+': Thread.current.priority = '+Thread.current.priority.to_s unless @quiet
+#=end
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
@@ -807,7 +807,7 @@ def redis_get_msg(msg_type, train_id)
  
                      end
 
-=begin                     
+#=begin                     
                      # Message 2 – 0002 – Cancellation
                      if msg_type == '0002'
                         if tracked_train.nil?
@@ -815,8 +815,8 @@ def redis_get_msg(msg_type, train_id)
                            p indiv_msg
                            p '------'
                         else
-                           #process_cancellation_msg(indiv_msg, tracked_train)      
-                           t=Thread.new{sleep60() }
+                           process_cancellation_msg(indiv_msg, tracked_train)      
+#                           t=Thread.new{sleep60() }
                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end
                      end
@@ -834,7 +834,13 @@ def redis_get_msg(msg_type, train_id)
                         else
                            #process_trainmovement_msg(indiv_msg, tracked_train)      
                            #t=Thread.new{process_trainmovement_msg(indiv_msg, tracked_train)   }
-                           t=Thread.new{sleep60() }
+                           opblock_0003 = proc {
+                              process_trainmovement_msg(indiv_msg, tracked_train)
+                           }
+                           EventMachine.defer(opblock_0003)   
+
+
+#                           t=Thread.new{sleep60() }
                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end                    
                      end
@@ -845,8 +851,8 @@ def redis_get_msg(msg_type, train_id)
                            p indiv_msg
                            p '------'
                         else
-#                           process_unidentifiedtrain_msg(indiv_msg, tracked_train)      
-                           t=Thread.new{sleep60() }
+                           process_unidentifiedtrain_msg(indiv_msg, tracked_train)      
+#                           t=Thread.new{sleep60() }
                         end                    
                      end
                      # Message 5 – 0005 – Train Reinstatement
@@ -856,8 +862,8 @@ def redis_get_msg(msg_type, train_id)
                            p indiv_msg
                            p '------'
                         else
-#                           process_trainreinstatement_msg(indiv_msg, tracked_train)      
-                           t=Thread.new{sleep60() }
+                           process_trainreinstatement_msg(indiv_msg, tracked_train)      
+#                           t=Thread.new{sleep60() }
                         end              
                      end
                      # Message 6 – 0006 – Train Change of Origin
@@ -867,8 +873,8 @@ def redis_get_msg(msg_type, train_id)
                            p indiv_msg
                            p '------'
                         else
-#                           process_trainchangeoforigin_msg(indiv_msg, tracked_train)      
-                           t=Thread.new{sleep60() }
+                           process_trainchangeoforigin_msg(indiv_msg, tracked_train)      
+#                           t=Thread.new{sleep60() }
                         end 
                      end
                      # Message 7 – 0007 – Train Change of Identity
@@ -878,8 +884,8 @@ def redis_get_msg(msg_type, train_id)
                            p indiv_msg
                            p '------'
                         else
-#                           process_trainchangeofidentify_msg(indiv_msg, tracked_train)      
-                           t=Thread.new{sleep60() }
+                           process_trainchangeofidentify_msg(indiv_msg, tracked_train)      
+#                           t=Thread.new{sleep60() }
                         end                     
                      end
                      # Message 8 – 0008 – Train Change of Location
@@ -889,8 +895,8 @@ def redis_get_msg(msg_type, train_id)
                            p indiv_msg
                            p '------'
                         else
-#                           process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
-                           t=Thread.new{sleep60() }
+                           process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
+#                           t=Thread.new{sleep60() }
                         end 
                      end
                   #end  # if toc = 30
