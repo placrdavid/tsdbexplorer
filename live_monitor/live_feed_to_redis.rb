@@ -107,8 +107,19 @@ module Poller
                # V1, store all messages as a list of strings, with a single key
                # use RPUSH to add a new element to the tail of the list
                # dump the msg into redis
-               redis_livefeed_keyname = @dbname+'_'+@environment
-               @redis.lpush(redis_livefeed_keyname,indiv_msg.to_json)
+               
+               # dump all messages to a single list - slow?
+               #redis_livefeed_keyname = @dbname                           
+               #@redis.lpush(redis_livefeed_keyname,@current_msg.to_json)
+#"header\":{\"msg_type\":\"0003\",\"source_dev_id\":\"\",\"user_id\":\"\",\"original_data_source\":\"SMART\",\"msg_queue_timestamp\":\"1350040304000\
+
+#               msg_type = indiv_msg['header']['1350040304000']  
+               keyname = indiv_msg['header']['msg_queue_timestamp']
+               timestamp = indiv_msg['header']['msg_queue_timestamp'] 
+               @redis.zadd(timestamp, timestamp, @current_msg.to_json)
+               
+               #
+               
                puts Time.now.to_s+': pushed into redis' unless @quiet
                
 
