@@ -637,97 +637,21 @@ module Poller
             puts 'subscribing to '+subscribed_feed.to_s
             subscribe subscribed_feed.to_s
          end
-#subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - London
-
-# TODO subscribe
-# TODO try connecting to all?
-# Tests: for bottle neck
-# London OG feed: London OG timetables (works)
-# All TOCS  feed: London OG timetables (?)
-# London OG feed: All TOCs  timetables (?)
-# All TOCs  feed: All TOCS  timetables (?)
-#         subscribe '/topic/TRAIN_MVT_ALL_TOC'  # train movements - all TOCs
-#         subscribe '/topic/TRAIN_MVT_EK_TOC'    # train movements - TFL only
-#         subscribe '/topic/TD_ALL_SIG_AREA'
-#         subscribe '/topic/VSTP_ALL'
-#         subscribe '/topic/TSR_ALL_ROUTE'
-#         subscribe '/topic/RTPPM_ALL'
-
-
       else
-
 
          # any exceptions in this loop are caught and shouldn't stop the script functioning
          begin
 
             msg_list = JSON.parse(msg.body)
-#            if msg.header['destination'] ==   '/topic/TRAIN_MVT_ALL_TOC' || msg.header['destination'] ==   '/topic/TRAIN_MVT_EK_TOC'
                msg_list.each do |indiv_msg|
                
                   # store the current msg for debug diagnostics
                   @current_msg = indiv_msg
                   toc_id = indiv_msg['body']['toc_id']     
-#                  if toc_id == '30'
                   
                      msg_type = indiv_msg['header']['msg_type']
                      puts Time.now.to_s+' (thread='+Thread.current.to_s+'): got a '+msg_type.to_s+' msg to process' unless @quiet
 
-#                     unless msg_type == '0003' # spare the log
-#                        puts Time.now.to_s+': got a '+msg_type.to_s+' msg to process' unless @quiet
-#                     end
-                     
-=begin
-# check if already stored...                     
-# cache a msg
-#def redis_store_msg(msg_type, indiv_msg)
-   redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+indiv_msg['body']['train_id'].to_s
-#   puts Time.now.to_s+' caching pair with key '+redis_key.to_s  unless @quiet   
-   @redis[redis_key] = indiv_msg.to_json   
-   puts Time.now.to_s+' stored msg to redis with key = '+redis_key.to_s  unless @quiet      
-
-#   retrieved_msg_json = @redis[redis_key]
-#   retrieved_msg_hash = JSON.parse(retrieved_msg_json)
-#   retrieved_train_id = retrieved_msg_hash['body']['train_id'].to_s
-#   puts Time.now.to_s+' train_id = '+retrieved_train_id.to_s  unless @quiet      
-end
-
-# get a messages, by type
-def redis_get_msg(msg_type, train_id)
-   redis_key=  'msg:'+msg_type.to_s+ ':tr
-=end   
-                     
-                     
-                     # redis cache
-                     #puts 'msg_type = '+msg_type.to_s
-                     #puts 'indiv_msg = '
-                     #p indiv_msg
-                     # are we tracking this msg?
-                     # get a messages, by type
-=begin                     
-                     train_id = indiv_msg['body']['train_id']   
-                     puts Time.now.to_s+' (thread='+Thread.current.to_s+'): train_id '+train_id.to_s+'' unless @quiet
-                     activation_msg = redis_get_msg('0001', train_id)
-                     if activation_msg.nil?
-                        puts Time.now.to_s+': not tracked' unless @quiet                        
-                     else                     
-                        puts Time.now.to_s+': we are tracking' unless @quiet                        
-                     end
-                     #puts Time.now.to_s+' (thread='+Thread.current.to_s+'): activation_msg '+activation_msg.to_s+' ' unless @quiet
-
-                     # store this msg
-                     redis_store_msg(msg_type, indiv_msg)
-=end                     
-
-                     # if its not an activation msgs, are we tracking it
-                     #if msg_type != '0001'                     
-                     #   puts Time.now.to_s+' not an activation msg'  unless @quiet
-                     #end
-
-                     # get the train id from the msg, and check if it has been initialised by a 0001 msg
-#                     train_id = indiv_msg['body']['train_id']                     
-                     #matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
-
-#=begin
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
                      matching_trackedtrains_res =  @conn.exec_prepared("get_matching_tracked_train_by_trainid_plan", [train_id])     
@@ -739,63 +663,21 @@ def redis_get_msg(msg_type, train_id)
                         puts Time.now.to_s+': '+train_id.to_s+' is tracked' unless @quiet                        
                      end
                      
-#                     if matching_trackedtrains_res.count.to_i==0
-#                        puts Time.now.to_s+': '+train_id.to_s+' not tracked' unless @quiet                        
-#                     end
-
-#                     puts Time.now.to_s+': Thread.current.priority = '+Thread.current.priority.to_s unless @quiet
-#=end
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
                        puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': 0001 msg for train_id '+train_id+''  
 #                        # if we are not already tracking this train, insert into tracking table, else report an error
-#                        if matching_trackedtrains_res.count.to_i == 0
-#                           puts Time.now.to_s+': about to run a new thread for a 0001 msg '+train_id+''   
+                        if matching_trackedtrains_res.count.to_i == 0
+                           puts Time.now.to_s+': about to run a new thread for a 0001 msg '+train_id+''   
 
-=begin                   
-                           t=Thread.new{process_activation_msg(indiv_msg) }
-                           nthreads = Thread.list.count()      
-                           puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
-                           t.priority = Thread.main.priority - 1
-                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
-                           #t=Thread.new{sleep60() }
-                           #process_activation_msg(indiv_msg)   
-=end
-
-#                           f= fork {process_activation_msg(indiv_msg) }
-#                           nthreads = Thread.list.count()      
-#                           puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
-#                           t.priority = Thread.main.priority - 1
-#                           puts Time.now.to_s+': f.priority = '+f.priority.to_s unless @quiet
-#                           process_activation_msg(indiv_msg)   
-
-
-#=begin
-# event machine still blocks...
                            opblock_0001 = proc {
                               process_activation_msg(indiv_msg)
                            }
                            EventMachine.defer(opblock_0001)   
-#=end
-
-=begin
-# try spawn
-                           opblock_0001 = EM.spawn { |indiv_msg|
-                              process_activation_msg(indiv_msg)
-                           }
-                           opblock_0001.notify indiv_msg
-=end
-
-#                        else
-#                           puts Time.now.to_s+': PROBLEM!'                                                
-#                           puts Time.now.to_s+': we have a new 0001 msg for train_id '+train_id+' but we are lready tracking it'                                                
-#                        end       
-#                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': finished multithread 0001 msg for train_id '+train_id+''                                                
- 
+                        end
                      end
 
-#=begin                     
                      # Message 2 – 0002 – Cancellation
                      if msg_type == '0002'
                         if tracked_train.nil?
@@ -804,8 +686,6 @@ def redis_get_msg(msg_type, train_id)
                            p '------'
                         else
                            process_cancellation_msg(indiv_msg, tracked_train)      
-#                           t=Thread.new{sleep60() }
-#                            puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end
                      end
                      # Message 3 – 0003 – Train Movement
@@ -814,22 +694,14 @@ def redis_get_msg(msg_type, train_id)
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"     unless @quiet                    
                            if train_id[0] == '2'
                               puts Time.now.to_s+": Could be a problem - train_id starts with '2'" 
-                              p indiv_msg
-                              p '------'
                            else
                               puts Time.now.to_s+": Unlikely to be a problem - train_id doesn't start with '2'"     unless @quiet                    
                            end
                         else
-                           #process_trainmovement_msg(indiv_msg, tracked_train)      
-                           #t=Thread.new{process_trainmovement_msg(indiv_msg, tracked_train)   }
                            opblock_0003 = proc {
                               process_trainmovement_msg(indiv_msg, tracked_train)
                            }
                            EventMachine.defer(opblock_0003)   
-
-
-#                           t=Thread.new{sleep60() }
-#                           puts Time.now.to_s+': t.priority = '+t.priority.to_s unless @quiet
                         end                    
                      end
                      # Message 4 – 0004 – Unidentified Train
@@ -840,7 +712,6 @@ def redis_get_msg(msg_type, train_id)
                            p '------'
                         else
                            process_unidentifiedtrain_msg(indiv_msg, tracked_train)      
-#                           t=Thread.new{sleep60() }
                         end                    
                      end
                      # Message 5 – 0005 – Train Reinstatement
@@ -851,7 +722,6 @@ def redis_get_msg(msg_type, train_id)
                            p '------'
                         else
                            process_trainreinstatement_msg(indiv_msg, tracked_train)      
-#                           t=Thread.new{sleep60() }
                         end              
                      end
                      # Message 6 – 0006 – Train Change of Origin
@@ -862,7 +732,6 @@ def redis_get_msg(msg_type, train_id)
                            p '------'
                         else
                            process_trainchangeoforigin_msg(indiv_msg, tracked_train)      
-#                           t=Thread.new{sleep60() }
                         end 
                      end
                      # Message 7 – 0007 – Train Change of Identity
@@ -873,7 +742,6 @@ def redis_get_msg(msg_type, train_id)
                            p '------'
                         else
                            process_trainchangeofidentify_msg(indiv_msg, tracked_train)      
-#                           t=Thread.new{sleep60() }
                         end                     
                      end
                      # Message 8 – 0008 – Train Change of Location
@@ -884,15 +752,9 @@ def redis_get_msg(msg_type, train_id)
                            p '------'
                         else
                            process_trainchangeoflocation_msg(indiv_msg, tracked_train)      
-#                           t=Thread.new{sleep60() }
                         end 
                      end
-                  #end  # if toc = 30
-=begin
-
-=end
                end  #    msg_list.each do |indiv_msg|
-            #end # if msg.header['destination'] ==   '/topic/....'
            
          # this 'should' allow the loop to continue, whilst emailing us an alert
          rescue Exception => e
