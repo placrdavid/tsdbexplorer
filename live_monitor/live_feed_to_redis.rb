@@ -38,70 +38,6 @@ STDOUT.sync = true
 # the DB name - used by redis to differentiate different stacks
 @dbname 
 
-=begin
-# convert a unix timestamp in msecs to a ruby time
-def unix_timestamp_to_time(unix_timestamp)
-   return nil if unix_timestamp.nil?
-   return Time.at((unix_timestamp.to_i/1000)).utc   
-end
-
-# extract a 'hhmm ' string from a ruby date
-# the space is significant. The departure field of the locations table stores 
-# times in a 'hhmm ' format
-def date_to_hhmm(date)
-   return nil if date.nil?
-   hh =  date.hour.to_s
-   hh = '0'+hh if hh.length==1
-   mm = date.min.to_s 
-   mm = '0'+mm if mm.length==1
-   hhmm = hh+mm+' '
-   return hhmm
-end
-
-# Calculates a predicted arrival / departure time as a utc ruby timestamp
-#   planned_time - planned time as utc
-#   secs_offset - the known secs offset from planned. - is ahead of schedule. + is behind schedule
-#   allow_predicted_before_planned - whether we are allowing predicted times to be in advance of planned
-#                                    whilst a train may arrive early, it should never to depart early
-#   return the predicted time  as a utc ruby timestamp
-def calculate_predicted_time(planned_time, secs_offset, allow_predicted_before_planned)
-   # if train is on time, return planned   
-   if secs_offset==0
-      return planned_time
-   # if train is ontime/early AND we are forcing predicted to not stray behind planned, then return planned time 
-   elsif (allow_predicted_before_planned == false && secs_offset<=0)
-      return planned_time
-   else
-      # get planned_time as a ruby Time
-      predicted_time = planned_time + secs_offset
-      return Time.at((predicted_time.to_f / 60.0).round * 60).utc
-   end   
-end
-
-=end
-
-# cache a msg
-def redis_store_msg(msg_type, indiv_msg)
-   redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+indiv_msg['body']['train_id'].to_s
-   @redis[redis_key] = indiv_msg.to_json   
-   puts Time.now.to_s+' stored msg to redis with key = '+redis_key.to_s  unless @quiet      
-
-end
-
-# get a messages, by type
-def redis_get_msg(msg_type, train_id)
-   redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+train_id.to_s
-   retrieved_msg_json = @redis[redis_key]
-   if retrieved_msg_json.nil?
-      puts Time.now.to_s+' no msg has key = '+redis_key.to_s  unless @quiet     
-      return nil 
-   else
-      puts Time.now.to_s+' we have a msg with key = '+redis_key.to_s  unless @quiet     
-      retrieved_msg_hash = JSON.parse(retrieved_msg_json)
-      return retrieved_msg_hash
-   end
-end
-
 # Poller module: parses the live feed
 module Poller
 
@@ -113,13 +49,20 @@ module Poller
       #ruby live_feed_to_redis.rb development quiet live_trains networkrail_feedurl networkrail_login networkrail_passcode error_msg_recipient_email live_feeds >> logfilepath.to_s
 
       @environment = ARGV[0]
+      puts '@environment = '+@environment .to_s
       @quiet = false      
       @quiet = true if ARGV[1].downcase == 'quiet'
+      puts '@quiet = '+@quiet .to_s
       @dbname = ARGV[2]
+      puts '@dbname = '+@dbname .to_s
       @networkrail_login = ARGV[4]
+      puts '@networkrail_login = '+@networkrail_login .to_s
       @networkrail_passcode = ARGV[5] 
+      puts '@networkrail_passcode = '+@networkrail_passcode .to_s
       @error_msg_recipient_email = ARGV[6] 
+      puts '@error_msg_recipient_email = '+@error_msg_recipient_email .to_s
       subscribed_feeds_string = ARGV[7] 
+      puts 'subscribed_feeds_string = '+subscribed_feeds_string .to_s
       @subscribed_feeds = subscribed_feeds_string.split(',')
       
       @redis = Redis.new
@@ -193,6 +136,8 @@ end # Poller module
 EM.run {
 
    @networkrail_feedurl = ARGV[3]
+   puts 'networkrail_feedurl = '+networkrail_feedurl.to_s
+
    puts Time.now.to_s+': @networkrail_feedurl = '+@networkrail_feedurl  unless @quiet
    
    # EventMachine method - initiates a TCP connection to the remote server and sets up event-handling for the connection
