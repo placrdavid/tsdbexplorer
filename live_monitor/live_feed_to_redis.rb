@@ -113,10 +113,15 @@ module Poller
                #@redis.lpush(redis_livefeed_keyname,@current_msg.to_json)
 #"header\":{\"msg_type\":\"0003\",\"source_dev_id\":\"\",\"user_id\":\"\",\"original_data_source\":\"SMART\",\"msg_queue_timestamp\":\"1350040304000\
 
-#               msg_type = indiv_msg['header']['1350040304000']  
-               keyname = indiv_msg['header']['msg_queue_timestamp']
+               msg_type = indiv_msg['header']['1350040304000']  
+#               keyname = indiv_msg['header']['msg_queue_timestamp']
+#               keyname = @dbname
+# use keyname of form dbname:msg_type:msg_queue_timestamp:
+#               setkeyname = 'live_nat_tra'
+# the name of the sorted set
+               sset_keyname = @dbname
                timestamp = indiv_msg['header']['msg_queue_timestamp'] 
-               @redis.zadd(timestamp, timestamp, @current_msg.to_json)
+               @redis.zadd(sset_keyname, timestamp, @current_msg.to_json)
                
                #
                
