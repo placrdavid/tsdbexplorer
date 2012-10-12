@@ -136,7 +136,7 @@ end # Poller module
 EM.run {
 
    @networkrail_feedurl = ARGV[3]
-   puts 'networkrail_feedurl = '+networkrail_feedurl.to_s
+   puts '@networkrail_feedurl = '+@networkrail_feedurl.to_s
 
    puts Time.now.to_s+': @networkrail_feedurl = '+@networkrail_feedurl  unless @quiet
    
