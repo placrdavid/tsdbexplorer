@@ -614,14 +614,9 @@ module Poller
       
       @redis = Redis.new
 
-
-
       open_db_connection(@host, @dbname, @port, @dbusername, @dbuserpwd)      
       # prep our SQL queries
       prepare_queries()     
-
-      #Thread.main.priority = Thread.main.priority+1
-
 
       # authent / connect to feed - credentials loaded from a yml
       puts Time.now.to_s+': connecting to feed' unless @quiet
@@ -631,12 +626,7 @@ module Poller
    end
 
    def receive_msg msg
-   
-      #Thread.main.priority = Thread.main.priority+1
-      #puts Time.now.to_s+':Thread.main.priority = '+Thread.main.priority.to_s unless @quiet
-      #nthreads = Thread.list.count()      
-      #puts Time.now.to_s+': nthreads = '+nthreads.to_s unless @quiet
-   
+      
      puts Time.now.to_s+': msg received' unless @quiet
       
       if msg.command == "CONNECTED"
