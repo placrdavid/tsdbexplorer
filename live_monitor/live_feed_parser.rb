@@ -624,8 +624,6 @@ module Poller
 
 
       # authent / connect to feed - credentials loaded from a yml
-      networkrail_login = 'david.mountain@placr.co.uk'
-      networkrail_passcode = 'Thentherewere3;'
       puts Time.now.to_s+': connecting to feed' unless @quiet
       connect :login => @networkrail_login, :passcode => @networkrail_passcode
       puts Time.now.to_s+': connected to feed' unless @quiet
