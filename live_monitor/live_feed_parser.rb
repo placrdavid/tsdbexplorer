@@ -77,6 +77,18 @@ def date_to_hhmm(date)
    return hhmm
 end
 
+# convert a date to yyyy-mm-dd
+def date_to_yyyycmmcdd(date)
+   return nil if date.nil?
+   yyyy = date.year.to_s
+   mm =  date.month.to_s
+   mm = '0'+mm if mm.length==1
+   dd = date.day.to_s 
+   dd = '0'+dd if dd.length==1
+   yyyycmmcdd = yyyy+'-'+mm+'-'+dd
+   return yyyycmmcdd
+end
+
 # Calculates a predicted arrival / departure time as a utc ruby timestamp
 #   planned_time - planned time as utc
 #   secs_offset - the known secs offset from planned. - is ahead of schedule. + is behind schedule
@@ -187,11 +199,6 @@ end
 # process the 0001 activation message
 def process_activation_msg(indiv_msg)
 
-#   conn = PGconn.open(:host=> @host, :user => @dbusername, :password => @dbuserpwd, :dbname => @dbname, :port => @port)
-#   get_basic_schedule_uuid_for_activation_msg_sql = "
-#   SELECT uuid, atoc_code FROM basic_schedules JOIN locations ON locations.basic_schedule_uuid = basic_schedules.uuid WHERE basic_schedules.runs_from = $1 AND basic_schedules.service_code like $2 AND locations.departure like $3 AND location_type = 'LO'"
-#   conn.prepare("get_basic_schedule_uuid_for_activation_msg_plan", get_basic_schedule_uuid_for_activation_msg_sql)
-
 
     puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
     puts Time.now.to_s+' indiv_msg s'  unless @quiet
@@ -231,9 +238,11 @@ def process_activation_msg(indiv_msg)
    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... looking up activated train in DB .....'  unless @quiet
 
    #matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
-   #matching_uuid_res = conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
 
-   matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [train_uid, '12-10-2012']) 
+   # get date!!!
+   origin_depart_date = date_to_yyyycmmcdd(origin_dep_timestamp)
+   puts 'origin_depart_date = '+origin_depart_date
+   matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [train_uid, origin_depart_date]) 
    n_matching_uuids = matching_uuid_res.count
    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... finished looking up activated train in DB .....'  unless @quiet
    
