@@ -636,6 +636,7 @@ module Poller
 
    def receive_msg msg
       
+     puts Time.now.to_s+': ------------' unless @quiet
      puts Time.now.to_s+': msg received' unless @quiet
       
       if msg.command == "CONNECTED"
@@ -796,6 +797,10 @@ module Poller
             `#echo #{emailcontent} | mutt -s #{emailheader} #{@error_msg_recipient_email}`
          end # begin / rescue Exception
       end # if / else msg.command == "CONNECTED"
+      
+     puts Time.now.to_s+': end of msg' unless @quiet
+     puts Time.now.to_s+': ------------' unless @quiet
+
    end #   receive_msg function
 end # Poller module
 
