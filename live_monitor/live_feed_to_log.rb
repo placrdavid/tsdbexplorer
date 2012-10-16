@@ -101,7 +101,7 @@ module Poller
             else
                puts Time.now.to_s+': timelastmsg = '+@timelastmsg.to_s unless @quiet
                interval = Time.now - @timelastmsg
-               puts Time.now.to_s+': time since last msg = '+interval.to_s unless @quiet
+               puts Time.now.to_s+': time since last msg = '+interval.to_s+' secs' unless @quiet
                # report if more than 60secs has elapsed
                if interval > 60
                   puts Time.now.to_s+': |||||||||||||||||||||||| Failed connection? ||||||||||||||||||||||||' unless @quiet

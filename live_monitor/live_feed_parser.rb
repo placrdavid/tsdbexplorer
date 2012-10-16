@@ -202,7 +202,7 @@ def process_activation_msg(indiv_msg)
 
     puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
     puts Time.now.to_s+' indiv_msg s'  unless @quiet
-      p indiv_msg
+    p indiv_msg
     puts Time.now.to_s+' indiv_msg e'  unless @quiet
 
    # get / process the fields of the activation msg       
@@ -652,6 +652,23 @@ module Poller
          begin
 
             msg_list = JSON.parse(msg.body)
+
+            if @timelastmsg.nil?
+               puts '=============================================================='
+               puts 'Previous msg time was nil - script (re)started?'
+            else
+               puts Time.now.to_s+': timelastmsg = '+@timelastmsg.to_s unless @quiet
+               interval = Time.now - @timelastmsg
+               puts Time.now.to_s+': time since last msg = '+interval.to_s+' secs' unless @quiet
+               # report if more than 60secs has elapsed
+               if interval > 60
+                  puts Time.now.to_s+': |||||||||||||||||||||||| Failed connection? ||||||||||||||||||||||||' unless @quiet
+               end
+            end
+            # log when we received last msg
+            @timelastmsg = Time.now
+
+
                msg_list.each do |indiv_msg|
                
                   # store the current msg for debug diagnostics
