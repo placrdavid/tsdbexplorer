@@ -92,7 +92,7 @@ module Poller
          begin
 
             # serialise the containing msg body from json
-            msg_list = JSON.parse(msg.body)
+            #msg_list = JSON.parse(msg.body)
             # for each individual msg
 
             if @timelastmsg.nil?
@@ -110,16 +110,21 @@ module Poller
             # log when we received last msg
             @timelastmsg = Time.now
 
+            puts Time.now.to_s+': the full msg_list ...... ' unless @quiet
+            puts '-----------------------------------------' unless @quiet
+            p msg_list
+            puts '-----------------------------------------' unless @quiet
+
             msg_list.each do |indiv_msg|
 
                # store the current msg for debug diagnostics
                @current_msg = indiv_msg
 
                msg_type = indiv_msg['header']['msg_type']
-               if msg_type == '0001'                     
-                  puts Time.now.to_s+': individual msg = ' unless @quiet
+#               if msg_type == '0001'                     
+                  puts Time.now.to_s+': individual msg of type '+msg_type.to_s unless @quiet
                   p @current_msg
-               end
+#               end
 
             end  #    msg_list.each do |indiv_msg|
            
