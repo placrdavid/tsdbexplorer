@@ -20,7 +20,7 @@ STDOUT.sync = true
 
 @conn # the DB connection
 # how long before we consider data 'stale'
-stale_limit_secs = 3*60
+stale_limit_secs = 30
 
 # open the DB connection
 def open_db_connection(host, dbname, port, username, pwd)
