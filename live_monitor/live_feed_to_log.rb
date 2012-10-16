@@ -91,8 +91,13 @@ module Poller
          # any exceptions in this loop are caught and shouldn't stop the script functioning
          begin
 
+            puts Time.now.to_s+': msg.body ...... ' unless @quiet
+            puts '-----------------------------------------' unless @quiet
+            p msg.body
+            puts '-----------------------------------------' unless @quiet
+
             # serialise the containing msg body from json
-            #msg_list = JSON.parse(msg.body)
+            msg_list = JSON.parse(msg.body)
             # for each individual msg
 
             if @timelastmsg.nil?
@@ -110,10 +115,6 @@ module Poller
             # log when we received last msg
             @timelastmsg = Time.now
 
-            puts Time.now.to_s+': the full msg_list ...... ' unless @quiet
-            puts '-----------------------------------------' unless @quiet
-            p msg_list
-            puts '-----------------------------------------' unless @quiet
 
             msg_list.each do |indiv_msg|
 
@@ -122,9 +123,10 @@ module Poller
 
                msg_type = indiv_msg['header']['msg_type']
 #               if msg_type == '0001'                     
-                  puts Time.now.to_s+': individual msg of type '+msg_type.to_s unless @quiet
-                  p @current_msg
+               puts Time.now.to_s+': individual msg of type '+msg_type.to_s unless @quiet
+               p @current_msg
 #               end
+               puts Time.now.to_s+': Finished handling individual msg'      
 
             end  #    msg_list.each do |indiv_msg|
            
@@ -141,7 +143,11 @@ module Poller
             emailheader = 'live feed parser ruby script failed'
             `#echo #{emailcontent} | mutt -s #{emailheader} #{@error_msg_recipient_email}`
          end # begin / rescue Exception
+
       end # if / else msg.command == "CONNECTED"
+
+      puts Time.now.to_s+': End of receive_msg function'      
+      
    end #   receive_msg function
 end # Poller module
 
