@@ -161,7 +161,14 @@ class LiveController < ApplicationController
       end
 
       # get timetables.... for same...    
-      @schedule = Location.where(:tiploc_code => tiplocs_string)
+      #@schedule = Location.where(:tiploc_code => tiplocs_string)
+
+       if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
+         @schedule = Location.where(:tiploc_code => tiplocs_string).order(:public_arrival).includes(:tiploc)
+       else
+         @schedule = Location.where(:tiploc_code => tiplocs_string).order(:public_departure).includes(:tiploc)
+       end
+
 
       # Only display passenger schedules in normal mode
 #      @schedule = @schedule.only_passenger
@@ -169,16 +176,16 @@ class LiveController < ApplicationController
        @range = Hash.new
        now = DateTime.now
        
-
-# order by planned_departure       
+      # order by planned_departure       
        @range[:from] = now
        @range[:to] = now + late_range
+=begin
        if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
          @schedule = @schedule.order(:public_arrival).includes(:tiploc)
        else
          @schedule = @schedule.order(:public_departure).includes(:tiploc)
        end
-       
+=end       
       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
        
       station_updates = StationUpdate.where(:tiploc_code => tiplocs_final_array).includes(:tiploc).includes(:tracked_train).
