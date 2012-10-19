@@ -230,7 +230,7 @@ matching_station_update = nil
       # now find matches on origin
       station_updates_matches.each do |station_updates_match|
          puts 'got matches'
-         if station_updates_match.tracked_trains.origin_name == originloc[0].tiploc.tps_description
+         if station_updates_match.tracked_train.origin_name == originloc[0].tiploc.tps_description
             matching_station_update = station_updates_match
             puts 'matching_station_update..'
             p matching_station_update
