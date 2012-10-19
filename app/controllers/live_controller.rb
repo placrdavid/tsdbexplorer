@@ -164,9 +164,9 @@ class LiveController < ApplicationController
       #@schedule = Location.where(:tiploc_code => tiplocs_string)
 
        if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
-         @schedule = Location.where(:tiploc_code => tiplocs_string).order(:public_arrival).includes(:tiploc)
+         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival).includes(:tiploc)
        else
-         @schedule = Location.where(:tiploc_code => tiplocs_string).order(:public_departure).includes(:tiploc)
+         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure).includes(:tiploc)
        end
 
 
