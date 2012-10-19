@@ -28,10 +28,14 @@ class Location < ActiveRecord::Base
   default_scope :order => 'seq'
 
 
-  # Join the BasicSchedule model
-
+=begin  # Join the BasicSchedule model
   scope :join_basic_schedule, lambda {
     joins("JOIN basic_schedules ON locations.basic_schedule_uuid = basic_schedules.uuid").where("basic_schedules.category NOT IN (?) AND basic_schedules.atoc_code NOT IN (?)", $CONFIG['RESTRICTIONS']['category'], $CONFIG['RESTRICTIONS']['toc'])
+  }
+=end
+  scope :join_basic_schedule, lambda {
+#    joins("JOIN basic_schedules ON locations.basic_schedule_uuid = basic_schedules.uuid")
+    joins("JOIN basic_schedules ON locations.basic_schedule_uuid = basic_schedules.uuid").where("basic_schedules.category NOT IN (?)", $CONFIG['RESTRICTIONS']['category'])
   }
 
 

@@ -61,11 +61,13 @@ class LocationController < ApplicationController
 
     @schedule = Location.where(:tiploc_code => tiplocs)
 
+    puts 'n schedules = '+@schedule.count.to_s
 
     # Only display passenger schedules in normal mode
 
-    @schedule = @schedule.only_passenger unless advanced_mode?
+    #@schedule = @schedule.only_passenger unless advanced_mode?
 
+    puts 'n schedules = '+@schedule.count.to_s
 
     # Optionally limit the search to trains travelling to or from a particular location
 
@@ -92,11 +94,15 @@ class LocationController < ApplicationController
     @range = Hash.new
     @range[:from] = @datetime - early_range
     @range[:to] = @datetime + late_range
+    puts 'n schedules = '+@schedule.count.to_s
 
 
     # Finally, run the query for schedules valid in the time window
 
-    @schedule = @schedule.runs_between(@range[:from], @range[:to], advanced_mode?)
+#    @schedule = @schedule.runs_between(@range[:from], @range[:to], advanced_mode?)
+    @schedule = @schedule.runs_between(@range[:from], @range[:to], true)
+#    @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
+    puts 'n schedules = '+@schedule.count.to_s
 
   end
 
