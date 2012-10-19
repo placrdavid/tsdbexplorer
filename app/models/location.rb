@@ -25,7 +25,7 @@ class Location < ActiveRecord::Base
 
   # Scopes
 
-  default_scope :order => 'seq'
+#  default_scope :order => 'seq'
 
 
 =begin  # Join the BasicSchedule model
