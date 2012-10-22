@@ -200,10 +200,10 @@ end
 def process_activation_msg(indiv_msg)
 
 
-    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
-    puts Time.now.to_s+' indiv_msg s'  unless @quiet
-    p indiv_msg
-    puts Time.now.to_s+' indiv_msg e'  unless @quiet
+#    puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg start--------------'  unless @quiet
+#    puts Time.now.to_s+' indiv_msg s'  unless @quiet
+#    p indiv_msg
+#    puts Time.now.to_s+' indiv_msg e'  unless @quiet
 
    # get / process the fields of the activation msg       
    toc_id = indiv_msg['body']['toc_id']     
@@ -241,10 +241,10 @@ def process_activation_msg(indiv_msg)
 
    # get date!!!
    origin_depart_date = date_to_yyyycmmcdd(origin_dep_timestamp)
-   puts 'origin_depart_date = '+origin_depart_date
+#   puts 'origin_depart_date = '+origin_depart_date
    matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [train_uid, origin_depart_date]) 
    n_matching_uuids = matching_uuid_res.count
-   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... finished looking up activated train in DB .....'  unless @quiet
+#   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... finished looking up activated train in DB .....'  unless @quiet
    
    # there should be one matching code, else we have a problem
    if n_matching_uuids==1
@@ -308,7 +308,7 @@ def process_activation_msg(indiv_msg)
       p indiv_msg
       puts '-------'
    end
-   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg end--------------' unless @quiet
+#   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': -----------0001 msg end--------------' unless @quiet
    #
    #  process downstream stations: as no report and empty predicted text ? 
 end
@@ -636,8 +636,8 @@ module Poller
 
    def receive_msg msg
       
-     puts Time.now.to_s+': ------------' unless @quiet
-     puts Time.now.to_s+': msg received' unless @quiet
+#     puts Time.now.to_s+': ------------' unless @quiet
+#     puts Time.now.to_s+': msg received' unless @quiet
       
       if msg.command == "CONNECTED"
 
@@ -658,9 +658,9 @@ module Poller
                puts '=============================================================='
                puts 'Previous msg time was nil - script (re)started?'
             else
-               puts Time.now.to_s+': timelastmsg = '+@timelastmsg.to_s unless @quiet
+#               puts Time.now.to_s+': timelastmsg = '+@timelastmsg.to_s unless @quiet
                interval = Time.now - @timelastmsg
-               puts Time.now.to_s+': time since last msg = '+interval.to_s+' secs' unless @quiet
+#               puts Time.now.to_s+': time since last msg = '+interval.to_s+' secs' unless @quiet
                # report if more than 60secs has elapsed
                if interval > 60
                   puts Time.now.to_s+': |||||||||||||||||||||||| Failed connection? ||||||||||||||||||||||||' unless @quiet
@@ -677,7 +677,7 @@ module Poller
                   toc_id = indiv_msg['body']['toc_id']     
                   
                      msg_type = indiv_msg['header']['msg_type']
-                     puts Time.now.to_s+' (thread='+Thread.current.to_s+'): got a '+msg_type.to_s+' msg to process' unless @quiet
+#                     puts Time.now.to_s+' (thread='+Thread.current.to_s+'): got a '+msg_type.to_s+' msg to process' unless @quiet
 
                      # get the train id from the msg, and check if it has been initialised by a 0001 msg
                      train_id = indiv_msg['body']['train_id']                     
@@ -693,10 +693,10 @@ module Poller
 
                      # Message 1 – 0001 – Activation Message
                      if msg_type == '0001'                     
-                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': 0001 msg for train_id '+train_id+''  
+#                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': 0001 msg for train_id '+train_id+''  
 #                        # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
-                           puts Time.now.to_s+': about to run a new thread for a 0001 msg '+train_id+''   
+#                           puts Time.now.to_s+': about to run a new thread for a 0001 msg '+train_id+''   
 
                            opblock_0001 = proc {
                               process_activation_msg(indiv_msg)

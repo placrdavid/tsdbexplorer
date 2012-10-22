@@ -14,7 +14,7 @@ require 'time'
 # flush out output
 STDOUT.sync = true 
 
-@verbose_cleaning = true
+@verbose_cleaning = false
 # to run script
 #  ruby live_feed_runner.rb production verbose '/home/dmm/tfl_live_tsdb/tsdbexplorer'
 
