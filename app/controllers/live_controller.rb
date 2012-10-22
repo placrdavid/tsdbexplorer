@@ -168,6 +168,7 @@ class LiveController < ApplicationController
        else
          @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure).includes(:tiploc)
        end
+      
 
 
       # Only display passenger schedules in normal mode
@@ -220,27 +221,27 @@ class LiveController < ApplicationController
 #      matching_station_update_i = -1
 
 #      station_updates_i = station_updates.where('tracked_train.origin_name' => originloc[0].tiploc.tps_description)
-      puts '=================================================='
-      puts 'station_updates = ' + station_updates.count.to_s
+#      puts '=================================================='
+#      puts 'station_updates = ' + station_updates.count.to_s
       # search for a matching update on departure/arrival time
       if planned_departure_ts !=nil
          station_updates_matches = station_updates.where(:planned_departure_timestamp => planned_departure_ts)
-         puts 'planned_departure_ts = '+planned_departure_ts.to_s
-         puts 'station_updates_matches = ' + station_updates_matches.count.to_s
+#         puts 'planned_departure_ts = '+planned_departure_ts.to_s
+#         puts 'station_updates_matches = ' + station_updates_matches.count.to_s
       elsif  planned_arrival_ts !=nil 
          station_updates_matches = station_updates.where(:planned_arrival_timestamp => planned_arrival_ts)
-         puts 'planned_arrival_ts = '+planned_arrival_ts.to_s
-         puts 'station_updates_matches = '  + station_updates_matches.count.to_s
+#         puts 'planned_arrival_ts = '+planned_arrival_ts.to_s
+#         puts 'station_updates_matches = '  + station_updates_matches.count.to_s
       end
        
 matching_station_update = nil
       # now find matches on origin
       station_updates_matches.each do |station_updates_match|
-         puts 'got matches'
+#         puts 'got matches'
          if station_updates_match.tracked_train.origin_name == originloc[0].tiploc.tps_description
             matching_station_update = station_updates_match
-            puts 'matching_station_update..'
-            p matching_station_update
+#            puts 'matching_station_update..'
+#            p matching_station_update
          end
       end
       
