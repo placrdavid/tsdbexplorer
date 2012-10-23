@@ -190,6 +190,7 @@ class LiveController < ApplicationController
          originloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LO')
          destinloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LT')
 
+
          # TODO could cause problems if now is after midnight
          planned_update_event_day= now
          unless schedule[:obj].public_arrival.nil?
@@ -219,7 +220,6 @@ class LiveController < ApplicationController
             matching_station_update = station_updates_match
          end
       end
-      
       
 
         timetable_hash = {}
