@@ -3,6 +3,7 @@
 # Jul 2012
 # A live departures controller
 ###########################################################
+ #         i am a change
 
 class LiveController < ApplicationController
 
@@ -218,7 +219,7 @@ class LiveController < ApplicationController
          # get matching updates, based on uuid, and tiploc
          #matching_station_update = StationUpdate.where( :basic_schedule_uuid => bs_uuid.to_s, :tiploc_code => tiplocs_final_array)
          matching_station_update = StationUpdate.includes(:tracked_train).where( "tracked_trains.basic_schedule_uuid = '"+bs_uuid.to_s+"'").where( :tiploc_code => tiplocs_final_array).first
-         
+ 
 =begin
          # search for a matching update on departure/arrival time
          if planned_departure_ts !=nil
