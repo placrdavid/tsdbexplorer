@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20121022062729) do
+ActiveRecord::Schema.define(:version => 20121107150850) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -457,6 +457,7 @@ ActiveRecord::Schema.define(:version => 20121022062729) do
     t.datetime "updated_at",                         :null => false
   end
 
+  add_index "tracked_trains", ["basic_schedule_uuid"], :name => "index_tracked_trains_on_basic_schedule_uuid"
   add_index "tracked_trains", ["train_id"], :name => "index_tracked_trains_on_train_id"
 
   create_table "users", :force => true do |t|
