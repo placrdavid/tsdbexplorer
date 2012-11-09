@@ -235,7 +235,7 @@ def process_activation_msg(indiv_msg)
    origin_dep_hhmm = date_to_hhmm(origin_dep_timestamp)
 
    # get the get_basic_schedule_uuid that matches this activation msg
-   puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... looking up activated train in DB .....'  unless @quiet
+   #puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': .... looking up activated train in DB .....'  unless @quiet
 
    #matching_uuid_res = @conn.exec_prepared("get_basic_schedule_uuid_for_activation_msg_plan", [schedule_start_date, train_service_code, origin_dep_hhmm]) 
 
