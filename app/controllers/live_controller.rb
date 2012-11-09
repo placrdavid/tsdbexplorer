@@ -377,6 +377,15 @@ end
             end
          end
 
+         if matching_station_update.nil?
+            puts 'no match for station departure'
+            p matching_station_update
+         else
+            puts 'matching station departure'
+         end
+         
+         
+
         timetable_hash = {}
          timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
          timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
