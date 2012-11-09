@@ -379,9 +379,9 @@ end
 
          if matching_station_update.nil?
             puts 'no match for station departure'
-            p matching_station_update
          else
             puts 'matching station departure'
+            p matching_station_update
          end
          
          
