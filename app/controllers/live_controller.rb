@@ -131,9 +131,7 @@ class LiveController < ApplicationController
    end
 
 
-
-
-
+=begin
 
    # Return all known live updates for a station, in json format
    def stations_updates_json
@@ -165,13 +163,6 @@ class LiveController < ApplicationController
          tiplocs_final_array.push(tiploc)
       end
 
-       if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
-         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
-       else
-         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure)
-       end
-      
-
        # Only display passenger schedules in normal mode
        late_range = 2.hour
        @range = Hash.new
@@ -180,7 +171,21 @@ class LiveController < ApplicationController
        # order by planned_departure       
        @range[:from] = now
        @range[:to] = now + late_range
-       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
+
+=begin
+       if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
+         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
+       else
+         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure)
+       end
+      @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
+#=end
+
+       if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
+         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival).runs_between(@range[:from], @range[:to], false)
+       else
+         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure).runs_between(@range[:from], @range[:to], false)
+       end
 
        # get the station updates that match this  
        #station_updates = StationUpdate.where(:tiploc_code => tiplocs_final_array).includes(:tiploc).includes(:tracked_train).
@@ -191,8 +196,8 @@ class LiveController < ApplicationController
        # get timetables
        @schedule.each do |schedule|
 
-         puts '-----------timetabled departure-----------'
-         p schedule
+         #puts '-----------timetabled departure-----------'
+         #p schedule
 
          # get the origin / destination
          bs_uuid = schedule[:obj].basic_schedule_uuid
@@ -235,7 +240,7 @@ class LiveController < ApplicationController
                matching_station_update = station_updates_match
             end
          end
-=end      
+#=end      
 
         timetable_hash = {}
          timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
@@ -275,8 +280,8 @@ class LiveController < ApplicationController
    end
    
 end
+=end
 
-=begin
    # Return all known live updates for a station, in json format
    def stations_updates_json
 
@@ -410,4 +415,3 @@ end
    end
    
 end
-=end
