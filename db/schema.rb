@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20121107150850) do
+ActiveRecord::Schema.define(:version => 20121112162606) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -243,6 +243,19 @@ ActiveRecord::Schema.define(:version => 20121107150850) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "live_msgs", :force => true do |t|
+    t.string   "msg_type",            :limit => 4
+    t.string   "basic_schedule_uuid", :limit => 36
+    t.string   "train_id",            :limit => 10
+    t.string   "msg_body",            :limit => 10000
+    t.datetime "created_at",                           :null => false
+    t.datetime "updated_at",                           :null => false
+  end
+
+  add_index "live_msgs", ["basic_schedule_uuid"], :name => "index_live_msgs_on_basic_schedule_uuid"
+  add_index "live_msgs", ["msg_type"], :name => "index_live_msgs_on_msg_type"
+  add_index "live_msgs", ["train_id"], :name => "index_live_msgs_on_train_id"
 
   create_table "locations", :force => true do |t|
     t.string   "basic_schedule_uuid",   :limit => 36
