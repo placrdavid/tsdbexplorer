@@ -60,22 +60,23 @@ def prepare_sql
    @conn.prepare("select_legacy_stationupdates_for_activated_trains_plan",select_legacy_stationupdates_for_activated_trains_sql)
 
 =end
+
    # get time of last update -   TODO from tracked trains?
-   #get_time_last_update_sql = "select updated_at from station_updates order by updated_at desc limit 1"
-   #@conn.prepare("get_time_last_update_plan", get_time_last_update_sql)
+   get_time_last_update_sql = "select updated_at from live_msgs order by updated_at desc limit 1"
+   @conn.prepare("get_time_last_update_plan", get_time_last_update_sql)
 
 end
 
 # get the time of the last update TODO from tracked trains?
 def time_last_update()
-=begin
+#=begin
    res_latest_update = @conn.exec_prepared("get_time_last_update_plan", []) 
    if res_latest_update.count <=0
       return nil
    else
       return Time.parse(res_latest_update[0]['updated_at'])
    end
-=end
+#=end
 end
 
 # remove any tracked trains that were activated a long time ago
