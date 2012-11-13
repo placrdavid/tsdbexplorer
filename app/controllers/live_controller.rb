@@ -3,7 +3,6 @@
 # Jul 2012
 # A live departures controller
 ###########################################################
- #         i am a change
 
 class LiveController < ApplicationController
 
@@ -505,7 +504,9 @@ end
 
          matching_station_update = nil
          # get matching updates, based on uuid, and tiploc
-         
+         live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).( :msg_type => '0003' )
+         puts 'live_movement_msgs'
+         p live_movement_msgs
          #
          
 =begin
