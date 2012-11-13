@@ -4,6 +4,8 @@
 # A live departures controller
 ###########################################################
 
+require 'json'
+
 class LiveController < ApplicationController
 
 
@@ -504,11 +506,27 @@ end
 
          matching_station_update = nil
          # get matching updates, based on uuid, and tiploc
-         live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).( :msg_type => '0003' )
+         live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
          puts 'live_movement_msgs'
          p live_movement_msgs
          #
-         
+
+
+	 if live_movement_msgs.size() ==1
+
+            move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
+            event_type = move_msg['event_type']
+            variation_status = move_msg['variation_status']
+=begin
+	    timetable_hash['diff_from_timetable_secs'] = matching_station_update.diff_from_timetable_secs unless matching_station_update.nil?
+            timetable_hash['predicted_arrival_timestamp'] = matching_station_update.predicted_arrival_timestamp unless matching_station_update.nil?
+            timetable_hash['predicted_departure_timestamp'] = matching_station_update.predicted_departure_timestamp unless matching_station_update.nil?
+            timetable_hash['event_type'] = matching_station_update.event_type unless matching_station_update.nil?         
+            timetable_hash['variation_status'] = matching_station_update.variation_status       unless matching_station_update.nil?
+=end
+        else
+          puts 'catch exceptions where there is no match'
+	end         
 =begin
          # search for a matching update on departure/arrival time
          if planned_departure_ts !=nil
@@ -549,11 +567,16 @@ end
          timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
          timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
          timetable_hash['predicted_departure_timestamp'] = matching_station_update.predicted_departure_timestamp unless matching_station_update.nil?         
-         timetable_hash['event_type'] = 'ACTIVATION'
+#         timetable_hash['event_type'] = 'ACTIVATION'
 #         timetable_hash['event_type'] = matching_station_update.event_type unless matching_station_update.nil?         
-         timetable_hash['event_type'] = 'we got one' unless live_movement_msgs.size() <=0          
+         timetable_hash['event_type'] = nil
+         timetable_hash['event_type'] =event_type unless event_type.nil?
+
+#         timetable_hash['event_type'] = 'we got one' unless live_movement_msgs.size() <=0          
          timetable_hash['variation_status'] = 'NO REPORT'         
-         timetable_hash['variation_status'] = matching_station_update.variation_status       unless matching_station_update.nil?            
+#         timetable_hash['variation_status'] = 'NO REPORT'         
+         timetable_hash['variation_status'] = variation_status unless variation_status.nil?
+#         timetable_hash['variation_status'] = matching_station_update.variation_status       unless matching_station_update.nil?            
          timetable_hash['operator_ref'] = nil
          timetable_hash['service_name'] = nil
          timetable_hash['service_name'] = schedule[:obj].basic_schedule.service_code unless schedule[:obj].basic_schedule.nil?
