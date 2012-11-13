@@ -93,8 +93,8 @@ class LiveController < ApplicationController
             timetable_variation_mins = move_msg['timetable_variation'].to_i
             unless timetable_variation_mins.nil?
                diff_from_timetable_secs = timetable_variation_mins*60         
-               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs)
-               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs)
+               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
+               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?
             end
          else
             puts 'catch exceptions where there is no match'
