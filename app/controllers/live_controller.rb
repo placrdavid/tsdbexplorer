@@ -550,7 +550,8 @@ end
          timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
          timetable_hash['predicted_departure_timestamp'] = matching_station_update.predicted_departure_timestamp unless matching_station_update.nil?         
          timetable_hash['event_type'] = 'ACTIVATION'
-         timetable_hash['event_type'] = matching_station_update.event_type unless matching_station_update.nil?         
+#         timetable_hash['event_type'] = matching_station_update.event_type unless matching_station_update.nil?         
+         timetable_hash['event_type'] = 'we got one' unless live_movement_msgs.size() <=0          
          timetable_hash['variation_status'] = 'NO REPORT'         
          timetable_hash['variation_status'] = matching_station_update.variation_status       unless matching_station_update.nil?            
          timetable_hash['operator_ref'] = nil
