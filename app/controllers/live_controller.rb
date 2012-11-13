@@ -506,6 +506,8 @@ end
          matching_station_update = nil
          # get matching updates, based on uuid, and tiploc
          
+         #
+         
 =begin
          # search for a matching update on departure/arrival time
          if planned_departure_ts !=nil

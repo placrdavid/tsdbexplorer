@@ -61,6 +61,7 @@ def prepare_sql
 
 =end
 
+
    # get time of last update -   TODO from tracked trains?
    get_time_last_update_sql = "select updated_at from live_msgs order by updated_at desc limit 1"
    @conn.prepare("get_time_last_update_plan", get_time_last_update_sql)

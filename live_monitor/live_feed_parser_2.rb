@@ -154,6 +154,12 @@ def prepare_queries()
    store_live_msg_sql = "INSERT INTO live_msgs (msg_type, basic_schedule_uuid, train_id, msg_body, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
    @conn.prepare("store_live_msg_plan", store_live_msg_sql)
 
+   # delete old msg updates
+   delete_legacy_msgs_by_type_and_bsuid_sql = "
+   delete from live_msgs where msg_type = $1 and basic_schedule_uuid = $2"
+   @conn.prepare("delete_legacy_msgs_by_type_and_bsuid_plan",delete_legacy_msgs_by_type_and_bsuid_sql)
+
+
 #insert_stationupdate_sql = "INSERT INTO station_updates (tiploc_code, location_type, platform,  train_id,
 #     diff_from_timetable_secs,  planned_arrival_timestamp, predicted_arrival_timestamp,  planned_departure_timestamp,  predicted_departure_timestamp,  event_type,  
 #     planned_event_type, variation_status, created_at, updated_at) 
@@ -340,11 +346,15 @@ def process_cancellation_msg(indiv_msg, tracked_train)
    train_id = indiv_msg['body']['train_id']                     
 
    body = indiv_msg['body'].to_json
+   
+   
+   # delete old
+   res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
+   # insert new
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
    puts Time.now.to_s+': -----------0002 msg end--------------' #unless @quiet
 
-# just dump it!
 =begin
 
    train_file_address = indiv_msg['body']['train_file_address'] 
@@ -385,6 +395,7 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    msg_type = indiv_msg['header']['msg_type']      
    train_id = indiv_msg['body']['train_id']                     
    body = indiv_msg['body'].to_json 
+   res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
 
@@ -564,6 +575,7 @@ def process_unidentifiedtrain_msg(indiv_msg, tracked_train)
    msg_type = indiv_msg['header']['msg_type']      
    train_id = indiv_msg['body']['train_id']                     
    body = indiv_msg['body'].to_json 
+   res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
    # just store it   
@@ -581,6 +593,7 @@ def process_trainreinstatement_msg(indiv_msg, tracked_train)
    msg_type = indiv_msg['header']['msg_type']      
    train_id = indiv_msg['body']['train_id']                     
    body = indiv_msg['body'].to_json 
+   res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
    puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'   unless @quiet
@@ -599,6 +612,7 @@ def process_trainchangeoforigin_msg(indiv_msg, tracked_train)
    msg_type = indiv_msg['header']['msg_type']      
    train_id = indiv_msg['body']['train_id']                     
    body = indiv_msg['body'].to_json 
+   res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
    puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+basic_schedule_uuid+' so we can ref with timetables'           unless @quiet                                      
@@ -617,6 +631,7 @@ def process_trainchangeofidentify_msg(indiv_msg, tracked_train)
    msg_type = indiv_msg['header']['msg_type']      
    train_id = indiv_msg['body']['train_id']                     
    body = indiv_msg['body'].to_json 
+   res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
 
@@ -636,6 +651,7 @@ def process_trainchangeoflocation_msg(indiv_msg, tracked_train)
    msg_type = indiv_msg['header']['msg_type']      
    train_id = indiv_msg['body']['train_id']                     
    body = indiv_msg['body'].to_json 
+   res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
    puts Time.now.to_s+': the train_id '+train_id+' relates to basic_schedule_uuid '+tracked_train['basic_schedule_uuid']+' so we can ref with timetables'                                                 unless @quiet
