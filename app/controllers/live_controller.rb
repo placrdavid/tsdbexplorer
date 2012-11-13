@@ -85,19 +85,20 @@ class LiveController < ApplicationController
          # get matching updates, based on uuid, and tiploc
          live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
 
-	 if live_movement_msgs.size() ==1
+         if live_movement_msgs.size() ==1
 
-         move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
-         event_type = move_msg['event_type']
-         variation_status = move_msg['variation_status']
-         timetable_variation_mins = move_msg['timetable_variation'].to_i
-         diff_from_timetable_secs = timetable_variation_mins*60
-         predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs)
-         predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs)
- 
-        else
-          puts 'catch exceptions where there is no match'
-	end         
+            move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
+            event_type = move_msg['event_type']
+            variation_status = move_msg['variation_status']
+            timetable_variation_mins = move_msg['timetable_variation'].to_i
+            unless timetable_variation_mins.nil?
+               diff_from_timetable_secs = timetable_variation_mins*60         
+               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs)
+               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs)
+            end
+         else
+            puts 'catch exceptions where there is no match'
+         end         
         timetable_hash = {}
          timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
          timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
