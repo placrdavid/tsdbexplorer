@@ -514,10 +514,24 @@ end
 
 	 if live_movement_msgs.size() ==1
 
-            move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
-            event_type = move_msg['event_type']
-            variation_status = move_msg['variation_status']
+         move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
+         event_type = move_msg['event_type']
+         variation_status = move_msg['variation_status']
+         timetable_variation_mins = move_msg['timetable_variation'].to_i
+         diff_from_timetable_secs = timetable_variation_mins*60
+         predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs)
+         predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs)
+ 
 =begin
+"{"event_type":"ARRIVAL","gbtt_timestamp":"1352738700000","original_loc_stanox":"","planned_timestamp":"1352738670000",
+"timetable_variation":"1","original_loc_timestamp":"","current_train_id":"","delay_monitoring_point":"false",
+"next_report_run_time":"1","reporting_stanox":"00000","actual_timestamp":"1352738700000","correction_ind":"false",
+"event_source":"AUTOMATIC","train_file_address":null,"platform":"","division_code":"30","train_terminated":"false",
+"train_id":"889F46MT12","offroute_ind":"false","variation_status":"LATE","train_service_code":"22218000",
+"toc_id":"30","loc_stanox":"52090","auto_expected":"true","direction_ind":"UP","route":"0",
+"planned_event_type":"ARRIVAL","next_report_stanox":"52088","line_ind":""}"
+
+
 	    timetable_hash['diff_from_timetable_secs'] = matching_station_update.diff_from_timetable_secs unless matching_station_update.nil?
             timetable_hash['predicted_arrival_timestamp'] = matching_station_update.predicted_arrival_timestamp unless matching_station_update.nil?
             timetable_hash['predicted_departure_timestamp'] = matching_station_update.predicted_departure_timestamp unless matching_station_update.nil?
@@ -560,13 +574,15 @@ end
          timetable_hash['origin_name'] = originloc[0].tiploc.tps_description
          timetable_hash['destination_name'] = destinloc[0].tiploc.tps_description
          timetable_hash['diff_from_timetable_secs'] = 0
-         timetable_hash['diff_from_timetable_secs'] = matching_station_update.diff_from_timetable_secs unless matching_station_update.nil?
+
+         timetable_hash['diff_from_timetable_secs'] = diff_from_timetable_secs unless diff_from_timetable_secs.nil?
+#         timetable_hash['diff_from_timetable_secs'] = matching_station_update.diff_from_timetable_secs unless matching_station_update.nil?
          timetable_hash['planned_arrival_timestamp'] = planned_arrival_ts
          timetable_hash['predicted_arrival_timestamp'] = planned_arrival_ts
-         timetable_hash['predicted_arrival_timestamp'] = matching_station_update.predicted_arrival_timestamp unless matching_station_update.nil?         
+         timetable_hash['predicted_arrival_timestamp'] = predicted_arrival_timestamp unless predicted_arrival_timestamp.nil?         
          timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
          timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
-         timetable_hash['predicted_departure_timestamp'] = matching_station_update.predicted_departure_timestamp unless matching_station_update.nil?         
+         timetable_hash['predicted_departure_timestamp'] = predicted_departure_timestamp unless predicted_departure_timestamp.nil?         
 #         timetable_hash['event_type'] = 'ACTIVATION'
 #         timetable_hash['event_type'] = matching_station_update.event_type unless matching_station_update.nil?         
          timetable_hash['event_type'] = nil
