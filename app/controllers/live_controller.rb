@@ -271,25 +271,23 @@ puts 'time to run entire query = '+elapsed.to_s
 
 #
          bs_uuid = schedule[:obj].basic_schedule_uuid
+=begin
 #         originloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LO')
 #         destinloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LT')
-
          originloc = schedule[:obj].basic_schedule.origin
          destinloc = schedule[:obj].basic_schedule.terminate
-
          origin_name = originloc.tiploc.tps_description
          destin_name = destinloc.tiploc.tps_description
          #timetable_hash['destination_name'] = destinloc[0].tiploc.tps_description
-
-
 #         puts 'get origin...'
 #puts 'standalone query = '+originloc[0].tiploc.tps_description
 #puts 'integrated query = '+originloca.tiploc.tps_description
-
-
 #         puts 'get destination...'
 #puts 'standalone query = '+destinloc[0].tiploc.tps_description
 #puts 'integrated query = '+destinloca.tiploc.tps_description
+=end
+         origin_name = 'nil'
+         destin_name = 'nil'
 
          # TODO could cause problems if now is after midnight
          planned_update_event_day= now
