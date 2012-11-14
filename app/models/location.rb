@@ -202,6 +202,21 @@ class Location < ActiveRecord::Base
   end
 
 
+  # Get the n departures for this station, at the specified time / date
+   def Location.get_departures(tiploc_code_array, starttime, endtime, n)
+
+      start_hhmm = Location.date_to_hhmm(starttime)
+      end_hhmm = Location.date_to_hhmm(endtime)
+
+
+      deps = Location.runs_on(starttime.to_s).where(:tiploc_code => tiploc_code_array).
+            where('public_departure >= ?', start_hhmm).
+            where('public_departure <= ?', end_hhmm).
+            order(:public_departure).limit(n)            
+      return deps
+   end
+   
+   
 
   # Returns true if this location is a publically advertised location, for
   # example, the origin or destination, calling points and pick-up or
@@ -242,4 +257,13 @@ class Location < ActiveRecord::Base
     self.activity_tf == true
   end
 
+   # extracts a hhmm string from a ruby timestamp
+   def Location.date_to_hhmm(datetimestamp)
+      hh = datetimestamp.hour.to_s
+      hh = '0'+hh if datetimestamp.hour < 10
+      mm = datetimestamp.min.to_s
+      mm = '0'+mm if datetimestamp.min < 10
+      return hh + mm
+   end
+   
 end
