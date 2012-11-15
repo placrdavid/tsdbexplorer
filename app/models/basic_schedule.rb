@@ -42,6 +42,7 @@ class BasicSchedule < ActiveRecord::Base
     self.locations.where(:location_type => 'LT').first
   end
 
+
   def is_stp_cancelled?
     self.stp_indicator == "C"
   end

@@ -287,7 +287,13 @@ puts 'time to run entire query = '+elapsed.to_s
 #puts 'integrated query = '+destinloca.tiploc.tps_description
 =end
          origin_name = 'nil'
-         destin_name = 'nil'
+         destin_name = 'nil' 
+
+         origin_name = schedule[:obj].basic_schedule.origin_name
+         destin_name = schedule[:obj].basic_schedule.destin_name
+         
+                  originloc = 
+         destinloc = 
 
          # TODO could cause problems if now is after midnight
          planned_update_event_day= now
