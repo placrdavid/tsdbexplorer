@@ -13,7 +13,8 @@ to update the tables with required values, you can execute the following SQL
          from locations, tiplocs
          where basic_schedules.uuid like locations.basic_schedule_uuid
          and locations.tiploc_code like tiplocs.tiploc_code
-         and locations.location_type = 'LO';
+         and locations.location_type = 'LO'
+         and basic_schedules.atoc_code like 'VT';
       update basic_schedules 
          set destin_tiploc = locations.tiploc_code, destin_name = tiplocs.tps_description
          from locations, tiplocs
