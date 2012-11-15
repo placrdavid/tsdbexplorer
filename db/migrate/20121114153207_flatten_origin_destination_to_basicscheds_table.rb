@@ -6,7 +6,8 @@ class FlattenOriginDestinationToBasicschedsTable < ActiveRecord::Migration
       add_column :basic_schedules, :destin_tiploc, :string, :limit => 7 
       add_column :basic_schedules, :destin_name, :string, :limit => 26
 
-      execute <<-SQL
+=begin
+to update the tables with required values, you can execute the following SQL
       update basic_schedules 
          set origin_tiploc = locations.tiploc_code, origin_name = tiplocs.tps_description
          from locations, tiplocs
@@ -19,7 +20,7 @@ class FlattenOriginDestinationToBasicschedsTable < ActiveRecord::Migration
          where basic_schedules.uuid like locations.basic_schedule_uuid
          and locations.tiploc_code like tiplocs.tiploc_code
          and locations.location_type = 'LT';
-      SQL
+=end      
    end
 
    def down
