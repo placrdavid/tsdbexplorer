@@ -253,13 +253,12 @@ puts 'time to run entire query = '+elapsed.to_s
        end      
 
       # Only display passenger schedules in normal mode
-       late_range = 2.hour
-       @range = Hash.new
-       now = DateTime.now
-       
-      # order by planned_departure       
-       @range[:from] = now
-       @range[:to] = now + late_range
+      before_range = 1.hour
+      after_range = 2.hour
+      @range = Hash.new
+      now = DateTime.now
+      @range[:from] = now -before_range
+      @range[:to] = now + after_range
       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
 
       timetables_array=[] 
@@ -268,30 +267,30 @@ puts 'time to run entire query = '+elapsed.to_s
       @schedule.each do |schedule|
 
          # get the origin / destination - speed this up
-
-#
+      #
          bs_uuid = schedule[:obj].basic_schedule_uuid
 =begin
-#         originloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LO')
-#         destinloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LT')
+      #         originloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LO')
+      #         destinloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LT')
          originloc = schedule[:obj].basic_schedule.origin
          destinloc = schedule[:obj].basic_schedule.terminate
          origin_name = originloc.tiploc.tps_description
          destin_name = destinloc.tiploc.tps_description
          #timetable_hash['destination_name'] = destinloc[0].tiploc.tps_description
-#         puts 'get origin...'
-#puts 'standalone query = '+originloc[0].tiploc.tps_description
-#puts 'integrated query = '+originloca.tiploc.tps_description
-#         puts 'get destination...'
-#puts 'standalone query = '+destinloc[0].tiploc.tps_description
-#puts 'integrated query = '+destinloca.tiploc.tps_description
+      #         puts 'get origin...'
+      #puts 'standalone query = '+originloc[0].tiploc.tps_description
+      #puts 'integrated query = '+originloca.tiploc.tps_description
+      #         puts 'get destination...'
+      #puts 'standalone query = '+destinloc[0].tiploc.tps_description
+      #puts 'integrated query = '+destinloca.tiploc.tps_description
 =end
+#=begin
          origin_name = 'nil'
          destin_name = 'nil' 
 
          origin_name = schedule[:obj].basic_schedule.origin_name
          destin_name = schedule[:obj].basic_schedule.destin_name
-      
+#=end
          # TODO could cause problems if now is after midnight
          planned_update_event_day= now
          unless schedule[:obj].public_arrival.nil?
@@ -311,7 +310,6 @@ puts 'time to run entire query = '+elapsed.to_s
          live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
 
          if live_movement_msgs.size() ==1
-
             move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
             event_type = move_msg['event_type']
             variation_status = move_msg['variation_status']
@@ -323,32 +321,86 @@ puts 'time to run entire query = '+elapsed.to_s
             end
          #else
          #   puts 'catch exceptions where there is no match'
-         end         
-        timetable_hash = {}
-         timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
-         timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
-         timetable_hash['platform'] = schedule[:obj].platform
-         #timetable_hash['origin_name'] = originloc[0].tiploc.tps_description
-         #timetable_hash['destination_name'] = destinloc[0].tiploc.tps_description
-         timetable_hash['origin_name'] = origin_name
-         timetable_hash['destination_name'] = destin_name         
-         timetable_hash['diff_from_timetable_secs'] = 0
-         timetable_hash['diff_from_timetable_secs'] = diff_from_timetable_secs unless diff_from_timetable_secs.nil?
-         timetable_hash['planned_arrival_timestamp'] = planned_arrival_ts
-         timetable_hash['predicted_arrival_timestamp'] = planned_arrival_ts
-         timetable_hash['predicted_arrival_timestamp'] = predicted_arrival_timestamp unless predicted_arrival_timestamp.nil?         
-         timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
-         timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
-         timetable_hash['predicted_departure_timestamp'] = predicted_departure_timestamp unless predicted_departure_timestamp.nil?         
-         timetable_hash['event_type'] = nil
-         timetable_hash['event_type'] =event_type unless event_type.nil?
-         timetable_hash['variation_status'] = 'NO REPORT'         
-         timetable_hash['variation_status'] = variation_status unless variation_status.nil?
-         timetable_hash['operator_ref'] = nil
-         timetable_hash['service_name'] = nil
-         timetable_hash['service_name'] = schedule[:obj].basic_schedule.service_code unless schedule[:obj].basic_schedule.nil?
-         timetable_hash['operator_ref'] = schedule[:obj].basic_schedule.atoc_code unless schedule[:obj].basic_schedule.nil?
-         timetables_array << timetable_hash         
+         end
+          
+         # check the include conditions: is planned/predicted arrival/departure in past/future
+         # values can be t/f/nil
+         planned_arrival_future = (Time.now < planned_arrival_ts) unless planned_arrival_ts.nil?
+         predicted_arrival_future = (Time.now < predicted_arrival_timestamp) unless predicted_arrival_timestamp.nil?
+         planned_departure_future = (Time.now < planned_departure_ts) unless planned_departure_ts.nil?
+         predicted_departure_future = (Time.now < predicted_departure_timestamp) unless predicted_departure_timestamp.nil?
+=begin         
+         # if we have no live info
+         puts 'Time.now = '+Time.now.to_s
+         puts 'planned_arrival_ts = '+planned_arrival_ts.to_s unless planned_arrival_ts.nil?
+         puts 'planned_arrival_future = '+planned_arrival_future.to_s unless planned_arrival_future.nil?
+         puts 'predicted_arrival_timestamp = '+predicted_arrival_timestamp.to_s unless predicted_arrival_timestamp.nil?
+         puts 'predicted_arrival_future = '+predicted_arrival_future.to_s unless predicted_arrival_future.nil?
+         puts 'planned_departure_ts = '+planned_departure_ts.to_s unless planned_departure_ts.nil?
+         puts 'planned_departure_future = '+planned_departure_future.to_s unless planned_departure_future.nil?
+         puts 'predicted_departure_timestamp = '+predicted_departure_timestamp.to_s unless predicted_departure_timestamp.nil?
+         puts 'predicted_departure_future = '+predicted_departure_future.to_s unless predicted_departure_future.nil?
+
+=end
+         # whether to include this departure (default=false)
+         include_dep = false
+         # hierarchy of checks of whether or not to include, set by first of 
+         #   predicted departure, predicted arrival, planned departure, planned arrival
+         # that is not null
+         if predicted_departure_future != nil
+            include_dep = predicted_departure_future
+#            puts 'include condition set by predicted_departure_future'
+         elsif predicted_arrival_future != nil
+            include_dep = predicted_arrival_future
+#            puts 'include condition set by predicted_arrival_future'
+         elsif planned_departure_future != nil
+            include_dep = planned_departure_future
+#            puts 'include condition set by planned_departure_future'
+         elsif planned_arrival_future != nil
+            include_dep = planned_arrival_future
+#            puts 'include condition set by planned_arrival_future'
+         else 
+            include_dep = false
+#            puts 'everything null - thats bad'
+         end
+#         puts 'include_dep: '+include_dep.to_s
+         #predicted_arrival_past
+         #planned_departure_past
+         #predicted_departure_past
+         
+         # ACTIVATION, ARRIVAL, LATE
+         
+         
+         # for departures planned arrival is in future   AND/OR predicted 
+         # 1. planned arrival is in future   AND/OR predicted 
+         #include_dep = true
+         if include_dep
+            timetable_hash = {}
+            timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
+            timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
+            timetable_hash['platform'] = schedule[:obj].platform
+            #timetable_hash['origin_name'] = originloc[0].tiploc.tps_description
+            #timetable_hash['destination_name'] = destinloc[0].tiploc.tps_description
+            timetable_hash['origin_name'] = origin_name
+            timetable_hash['destination_name'] = destin_name         
+            timetable_hash['diff_from_timetable_secs'] = 0
+            timetable_hash['diff_from_timetable_secs'] = diff_from_timetable_secs unless diff_from_timetable_secs.nil?
+            timetable_hash['planned_arrival_timestamp'] = planned_arrival_ts
+            timetable_hash['predicted_arrival_timestamp'] = planned_arrival_ts
+            timetable_hash['predicted_arrival_timestamp'] = predicted_arrival_timestamp unless predicted_arrival_timestamp.nil?         
+            timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
+            timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
+            timetable_hash['predicted_departure_timestamp'] = predicted_departure_timestamp unless predicted_departure_timestamp.nil?         
+            timetable_hash['event_type'] = nil
+            timetable_hash['event_type'] =event_type unless event_type.nil?
+            timetable_hash['variation_status'] = 'NO REPORT'         
+            timetable_hash['variation_status'] = variation_status unless variation_status.nil?
+            timetable_hash['operator_ref'] = nil
+            timetable_hash['service_name'] = nil
+            timetable_hash['service_name'] = schedule[:obj].basic_schedule.service_code unless schedule[:obj].basic_schedule.nil?
+            timetable_hash['operator_ref'] = schedule[:obj].basic_schedule.atoc_code unless schedule[:obj].basic_schedule.nil?
+            timetables_array << timetable_hash        
+         end
       end
 
 

@@ -100,6 +100,7 @@ when the feed parsing encounters problems.
 Placr fork for live London departures.
 
 To retrieve live train movement updates, and transform them to station arrivals / departures.
+ - following an import, run the lib/tsdbexplorer/cif/postprocess.sql SQL script to update the origin and destination fields in the basic schedules table
  - complete the TFL_TRACKER values in 'config/tsdbexplorer.yml'
  - copy template and complete the values to create a 'live_monitor/bash_settings.txt' file
  - set up a cron job to run the live_feed_runner.sh bash script every few (5?) minutes
