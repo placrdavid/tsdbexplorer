@@ -315,9 +315,21 @@ puts 'time to run entire query = '+elapsed.to_s
             variation_status = move_msg['variation_status']
             timetable_variation_mins = move_msg['timetable_variation'].to_i
             unless timetable_variation_mins.nil?
+            
+#            "event_type":"DEPARTURE","gbtt_timestamp":"1353420000000","original_loc_stanox":"","planned_timestamp":"1353420000000","timetable_variation":"10","original_loc_timestamp":"","current_train_id":"","delay_monitoring_point":"true","next_report_run_time":"2","reporting_stanox":"88401","actual_timestamp":"1353420600000","correction_ind":"false","event_source":"AUTOMATIC","train_file_address":null,"platform":" 6","division_code":"80","train_terminated":"false","train_id":"882H42MO20","offroute_ind":"false","variation_status":"LATE",
+               
                diff_from_timetable_secs = timetable_variation_mins*60         
                predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
                predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?
+               
+               if move_msg['event_type'] == 'DEPARTURE'
+                  puts ''+planned_departure_hhmm+' departure from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
+               end
+               if move_msg['event_type'] == 'ARRIVAL'
+                  puts ''+planned_arrival_hhmm+' arrival from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
+               end
+               puts 'diff_from_timetable_secs = '+diff_from_timetable_secs
+
             end
          #else
          #   puts 'catch exceptions where there is no match'
