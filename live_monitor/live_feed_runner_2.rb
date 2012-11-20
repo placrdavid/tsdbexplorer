@@ -35,8 +35,13 @@ def close_db_connection()
    puts Time.now.to_s+': disconnected from DB' unless @quiet
 end
 @tracked_trains_expiry = '1 day'
-@station_updates_moving_trains_expiry = '30 minutes'
-@station_updates_activated_trains_expiry = '4 hours'
+
+#@station_updates_moving_trains_expiry = '30 minutes'
+#@station_updates_activated_trains_expiry = '4 hours'
+
+@msg_0003_expiry = '30 minutes'
+@msg_all_expiry = '4 hours'
+
 
 # prepare sql statements
 def prepare_sql
@@ -46,6 +51,20 @@ def prepare_sql
    @conn.prepare("delete_legacy_trackedtrains_plan", delete_legacy_trackedtrains_sql)
    select_legacy_trackedtrains_sql = "select * from tracked_trains where origin_dep_timestamp < now() - interval '"+@tracked_trains_expiry+"'"
    @conn.prepare("select_legacy_trackedtrains_plan", select_legacy_trackedtrains_sql)
+
+   # delete live 0003 messages, older than specified time period
+   delete_legacy_0003_msgs_sql = "delete from live_msgs where updated_at < now() - interval '"+@msg_0003_expiry+"' and msg_type = '0003'"
+   @conn.prepare("delete_legacy_0003_msgs_plan",delete_legacy_0003_msgs_sql)
+   select_legacy_0003_msgs_sql = "select * from live_msgs where updated_at < now() - interval '"+@msg_0003_expiry+"' and msg_type = '0003'"
+   @conn.prepare("select_legacy_0003_msgs_plan",select_legacy_0003_msgs_sql)
+
+   # delete all stale messages after 4 hrs
+   delete_legacy_all_msgs_sql = "delete from live_msgs where updated_at < now() - interval '"+@msg_all_expiry+"'"
+   @conn.prepare("delete_legacy_all_msgs_plan",delete_legacy_all_msgs_sql)
+   select_legacy_all_msgs_sql = "delete from live_msgs where updated_at < now() - interval '"+@msg_all_expiry+"'"
+   @conn.prepare("select_legacy_all_msgs_plan",select_legacy_all_msgs_sql)
+
+
 =begin
    # delete station_updates for MOVING trains, older than specified time period
    delete_legacy_stationupdates_for_moving_trains_sql = "delete from station_updates where updated_at < now() - interval '"+@station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
@@ -53,7 +72,7 @@ def prepare_sql
    select_legacy_stationupdates_for_moving_trains_sql = "select * from station_updates where updated_at < now() - interval '"+@station_updates_moving_trains_expiry+"' and variation_status not like 'NO REPORT'"
    @conn.prepare("select_legacy_stationupdates_for_moving_trains_plan",select_legacy_stationupdates_for_moving_trains_sql)
 
-   # delete station_updates for ACTIVATE BUT NOT YET MOVING trains, older than specified time period
+   # delete station_updates for ACTIVE BUT NOT YET MOVING trains, older than specified time period
    delete_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+@station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
    @conn.prepare("delete_legacy_stationupdates_for_activated_trains_plan",delete_legacy_stationupdates_for_activated_trains_sql)
    select_legacy_stationupdates_for_activated_trains_sql = "delete from station_updates where updated_at < now() - interval '"+@station_updates_activated_trains_expiry+"' and variation_status like 'NO REPORT'"
@@ -126,10 +145,43 @@ def clean_station_updates
    @conn.exec_prepared("delete_legacy_stationupdates_for_activated_trains_plan", [])     
 end
 =end
+
+
+# remove any stale live msgs
+def clean_live_msgs
+   # verbose cleaning - for debug
+   if @verbose_cleaning
+      msgs0003_to_clean = @conn.exec_prepared("select_legacy_0003_msgs_plan", [])     
+      puts ""+msgs0003_to_clean.count.to_s+" live 0003 msgs older than "+@msg_0003_expiry+" to clean from DB"
+      msgs0003_to_clean.each { |msg0003_to_clean| 
+         puts "---------------------------------------------------------------------"
+         puts "Purging the following 0003 msg"
+         p msg0003_to_clean
+         puts "---------------------------------------------------------------------"
+      }
+   end
+   @conn.exec_prepared("delete_legacy_0003_msgs_plan", [])     
+   
+   # verbose cleaning - for debug
+   if @verbose_cleaning
+      msgs_to_clean = @conn.exec_prepared("select_legacy_all_msgs_sql", [])     
+      puts ""+msgs_to_clean.count.to_s+" live messages (all types) older than "+@msg_other_expiry+" to clean from DB"
+      msgs_to_clean.each { |msg_to_clean| 
+         puts "---------------------------------------------------------------------"
+         puts "Purging the following msg"
+         p msg_to_clean
+         puts "---------------------------------------------------------------------"
+      }
+   end
+   @conn.exec_prepared("delete_legacy_all_msgs_plan", [])     
+end
+
 # clean up all live feeds
 def clean_live_feed
    clean_tracked_trains()
 #   clean_station_updates()
+   clean_live_msgs()
+
 end
 
 # get the environment and verbosity from cmd line
