@@ -328,7 +328,7 @@ puts 'time to run entire query = '+elapsed.to_s
                if move_msg['event_type'] == 'ARRIVAL'
                   puts ''+planned_arrival_hhmm+' arrival from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
                end
-               puts 'diff_from_timetable_secs = '+diff_from_timetable_secs
+               puts 'diff_from_timetable_secs = '+diff_from_timetable_secs.to_s
 
             end
          #else
