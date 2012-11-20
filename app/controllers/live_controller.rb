@@ -322,11 +322,11 @@ puts 'time to run entire query = '+elapsed.to_s
                predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
                predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?
                
-               if move_msg['event_type'] == 'DEPARTURE'
-                  puts ''+planned_departure_hhmm+' departure from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
+               unless planned_departure_hhmm.nil?
+                  puts ''+planned_departure_hhmm+' '+move_msg['event_type']+' from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
                end
-               if move_msg['event_type'] == 'ARRIVAL'
-                  puts ''+planned_arrival_hhmm+' arrival from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
+               unless planned_arrival_hhmm.nil?
+                  puts ''+planned_arrival_hhmm+' '+move_msg['event_type']+' from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
                end
                puts 'diff_from_timetable_secs = '+diff_from_timetable_secs.to_s
 
