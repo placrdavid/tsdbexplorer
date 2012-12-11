@@ -99,6 +99,90 @@ ActiveRecord::Schema.define(:version => 20121114153207) do
   add_index "basic_schedules", ["train_uid"], :name => "index_basic_schedules_on_train_uid"
   add_index "basic_schedules", ["uuid"], :name => "index_basic_schedules_on_uuid"
 
+  create_table "basic_schedules_new", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "uuid",                      :limit => 36
+    t.string   "train_uid",                 :limit => 6
+    t.string   "status",                    :limit => 1
+    t.date     "runs_from"
+    t.date     "runs_to"
+    t.boolean  "runs_mo"
+    t.boolean  "runs_tu"
+    t.boolean  "runs_we"
+    t.boolean  "runs_th"
+    t.boolean  "runs_fr"
+    t.boolean  "runs_sa"
+    t.boolean  "runs_su"
+    t.string   "bh_running",                :limit => 1
+    t.string   "category",                  :limit => 2
+    t.string   "train_identity",            :limit => 4
+    t.string   "train_identity_unique",     :limit => 10
+    t.string   "headcode",                  :limit => 4
+    t.string   "service_code",              :limit => 8
+    t.string   "portion_id",                :limit => 1
+    t.string   "power_type",                :limit => 3
+    t.string   "timing_load",               :limit => 4
+    t.string   "speed",                     :limit => 3
+    t.string   "operating_characteristics", :limit => 6
+    t.string   "train_class",               :limit => 1
+    t.string   "sleepers",                  :limit => 1
+    t.string   "reservations",              :limit => 1
+    t.string   "catering_code",             :limit => 4
+    t.string   "service_branding",          :limit => 1
+    t.string   "stp_indicator",             :limit => 1
+    t.string   "uic_code",                  :limit => 5
+    t.string   "atoc_code",                 :limit => 2
+    t.string   "ats_code",                  :limit => 1
+    t.string   "rsid",                      :limit => 8
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "data_source",               :limit => 16
+    t.boolean  "oper_q"
+    t.boolean  "oper_y"
+  end
+
+  create_table "basic_schedules_old", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "uuid",                      :limit => 36
+    t.string   "train_uid",                 :limit => 6
+    t.string   "status",                    :limit => 1
+    t.date     "runs_from"
+    t.date     "runs_to"
+    t.boolean  "runs_mo"
+    t.boolean  "runs_tu"
+    t.boolean  "runs_we"
+    t.boolean  "runs_th"
+    t.boolean  "runs_fr"
+    t.boolean  "runs_sa"
+    t.boolean  "runs_su"
+    t.string   "bh_running",                :limit => 1
+    t.string   "category",                  :limit => 2
+    t.string   "train_identity",            :limit => 4
+    t.string   "train_identity_unique",     :limit => 10
+    t.string   "headcode",                  :limit => 4
+    t.string   "service_code",              :limit => 8
+    t.string   "portion_id",                :limit => 1
+    t.string   "power_type",                :limit => 3
+    t.string   "timing_load",               :limit => 4
+    t.string   "speed",                     :limit => 3
+    t.string   "operating_characteristics", :limit => 6
+    t.string   "train_class",               :limit => 1
+    t.string   "sleepers",                  :limit => 1
+    t.string   "reservations",              :limit => 1
+    t.string   "catering_code",             :limit => 4
+    t.string   "service_branding",          :limit => 1
+    t.string   "stp_indicator",             :limit => 1
+    t.string   "uic_code",                  :limit => 5
+    t.string   "atoc_code",                 :limit => 2
+    t.string   "ats_code",                  :limit => 1
+    t.string   "rsid",                      :limit => 8
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "data_source",               :limit => 16
+    t.boolean  "oper_q"
+    t.boolean  "oper_y"
+  end
+
   create_table "cif_files", :force => true do |t|
     t.string   "file_ref",                :limit => 7
     t.datetime "extract_timestamp"
@@ -340,6 +424,132 @@ ActiveRecord::Schema.define(:version => 20121114153207) do
   add_index "locations", ["seq"], :name => "index_locations_on_seq"
   add_index "locations", ["tiploc_code"], :name => "index_locations_on_tiploc_code"
 
+  create_table "locations_new", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "basic_schedule_uuid",   :limit => 36
+    t.string   "location_type",         :limit => 2
+    t.string   "tiploc_code",           :limit => 7
+    t.integer  "tiploc_instance"
+    t.string   "arrival",               :limit => 5
+    t.string   "public_arrival",        :limit => 5
+    t.string   "pass",                  :limit => 5
+    t.string   "departure",             :limit => 5
+    t.string   "public_departure",      :limit => 5
+    t.string   "platform",              :limit => 3
+    t.string   "line",                  :limit => 3
+    t.string   "path",                  :limit => 3
+    t.string   "engineering_allowance", :limit => 2
+    t.string   "pathing_allowance",     :limit => 2
+    t.string   "performance_allowance", :limit => 2
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "seq"
+    t.boolean  "activity_ae"
+    t.boolean  "activity_bl"
+    t.boolean  "activity_minusd"
+    t.boolean  "activity_hh"
+    t.boolean  "activity_kc"
+    t.boolean  "activity_ke"
+    t.boolean  "activity_kf"
+    t.boolean  "activity_ks"
+    t.boolean  "activity_op"
+    t.boolean  "activity_or"
+    t.boolean  "activity_pr"
+    t.boolean  "activity_rm"
+    t.boolean  "activity_rr"
+    t.boolean  "activity_minust"
+    t.boolean  "activity_tb"
+    t.boolean  "activity_tf"
+    t.boolean  "activity_ts"
+    t.boolean  "activity_tw"
+    t.boolean  "activity_minusu"
+    t.boolean  "activity_a"
+    t.boolean  "activity_c"
+    t.boolean  "activity_d"
+    t.boolean  "activity_e"
+    t.boolean  "activity_g"
+    t.boolean  "activity_h"
+    t.boolean  "activity_k"
+    t.boolean  "activity_l"
+    t.boolean  "activity_n"
+    t.boolean  "activity_r"
+    t.boolean  "activity_s"
+    t.boolean  "activity_t"
+    t.boolean  "activity_u"
+    t.boolean  "activity_w"
+    t.boolean  "activity_x"
+    t.boolean  "next_day_arrival"
+    t.boolean  "next_day_departure"
+    t.integer  "arrival_secs"
+    t.integer  "departure_secs"
+    t.integer  "pass_secs"
+    t.integer  "public_arrival_secs"
+    t.integer  "public_departure_secs"
+  end
+
+  create_table "locations_old", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "basic_schedule_uuid",   :limit => 36
+    t.string   "location_type",         :limit => 2
+    t.string   "tiploc_code",           :limit => 7
+    t.integer  "tiploc_instance"
+    t.string   "arrival",               :limit => 5
+    t.string   "public_arrival",        :limit => 5
+    t.string   "pass",                  :limit => 5
+    t.string   "departure",             :limit => 5
+    t.string   "public_departure",      :limit => 5
+    t.string   "platform",              :limit => 3
+    t.string   "line",                  :limit => 3
+    t.string   "path",                  :limit => 3
+    t.string   "engineering_allowance", :limit => 2
+    t.string   "pathing_allowance",     :limit => 2
+    t.string   "performance_allowance", :limit => 2
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "seq"
+    t.boolean  "activity_ae"
+    t.boolean  "activity_bl"
+    t.boolean  "activity_minusd"
+    t.boolean  "activity_hh"
+    t.boolean  "activity_kc"
+    t.boolean  "activity_ke"
+    t.boolean  "activity_kf"
+    t.boolean  "activity_ks"
+    t.boolean  "activity_op"
+    t.boolean  "activity_or"
+    t.boolean  "activity_pr"
+    t.boolean  "activity_rm"
+    t.boolean  "activity_rr"
+    t.boolean  "activity_minust"
+    t.boolean  "activity_tb"
+    t.boolean  "activity_tf"
+    t.boolean  "activity_ts"
+    t.boolean  "activity_tw"
+    t.boolean  "activity_minusu"
+    t.boolean  "activity_a"
+    t.boolean  "activity_c"
+    t.boolean  "activity_d"
+    t.boolean  "activity_e"
+    t.boolean  "activity_g"
+    t.boolean  "activity_h"
+    t.boolean  "activity_k"
+    t.boolean  "activity_l"
+    t.boolean  "activity_n"
+    t.boolean  "activity_r"
+    t.boolean  "activity_s"
+    t.boolean  "activity_t"
+    t.boolean  "activity_u"
+    t.boolean  "activity_w"
+    t.boolean  "activity_x"
+    t.boolean  "next_day_arrival"
+    t.boolean  "next_day_departure"
+    t.integer  "arrival_secs"
+    t.integer  "departure_secs"
+    t.integer  "pass_secs"
+    t.integer  "public_arrival_secs"
+    t.integer  "public_departure_secs"
+  end
+
   create_table "points", :force => true do |t|
     t.text     "full_name"
     t.text     "short_name"
@@ -451,6 +661,34 @@ ActiveRecord::Schema.define(:version => 20121114153207) do
   add_index "tiplocs", ["crs_code"], :name => "index_tiplocs_on_crs_code"
   add_index "tiplocs", ["stanox"], :name => "index_tiplocs_on_stanox"
   add_index "tiplocs", ["tiploc_code"], :name => "index_tiplocs_on_tiploc_code", :unique => true
+
+  create_table "tiplocs_new", :id => false, :force => true do |t|
+    t.integer "id"
+    t.string  "tiploc_code",     :limit => 7
+    t.string  "nalco",           :limit => 6
+    t.string  "tps_description", :limit => 26
+    t.string  "stanox",          :limit => 5
+    t.string  "crs_code",        :limit => 3
+    t.string  "description",     :limit => 16
+    t.float   "geo_lat"
+    t.float   "geo_lon"
+    t.boolean "is_public"
+    t.string  "nalco_four",      :limit => 4
+  end
+
+  create_table "tiplocs_old", :id => false, :force => true do |t|
+    t.integer "id"
+    t.string  "tiploc_code",     :limit => 7
+    t.string  "nalco",           :limit => 6
+    t.string  "tps_description", :limit => 26
+    t.string  "stanox",          :limit => 5
+    t.string  "crs_code",        :limit => 3
+    t.string  "description",     :limit => 16
+    t.float   "geo_lat"
+    t.float   "geo_lon"
+    t.boolean "is_public"
+    t.string  "nalco_four",      :limit => 4
+  end
 
   create_table "tracked_trains", :force => true do |t|
     t.string   "msg_type",             :limit => 4

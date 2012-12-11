@@ -32,9 +32,10 @@ startt = Time.now
       tiplocs_orig_array.each do |tiploc|
          # A slection of kludges - this is NOT a longterm solution!! But fixes the CRS <-> tiploc conversion problem in the shortterm
          # the klapham kludge. 
-         clapham_tiplocs = [ 'CLPHMJC', 'CLPHMJW', 'CLPHMJM' ]
-         tiploc = 'CLPHMJ2' if clapham_tiplocs.include?(tiploc)
+#         clapham_tiplocs = [ 'CLPHMJC', 'CLPHMJW', 'CLPHMJM' ]
+#         tiploc = 'CLPHMJ2' if clapham_tiplocs.include?(tiploc)
 
+	puts 'tiploc = '+tiploc
          # the wembley kludge
          wembley_tiplocs = [ 'WMBY' ]
          tiploc = 'WMBYDC' if wembley_tiplocs.include?(tiploc)
@@ -231,20 +232,23 @@ puts 'time to run entire query = '+elapsed.to_s
       tiplocs_string = params[:tiploc].upcase
       tiplocs_orig_array = tiplocs_string.split(',')
       
+=begin
       tiplocs_final_array=[]                 
 
       # for each update, for this station, construct an array of hashes
       tiplocs_orig_array.each do |tiploc|
          # A slection of kludges - this is NOT a longterm solution!! But fixes the CRS <-> tiploc conversion problem in the shortterm
          # the klapham kludge. 
-         clapham_tiplocs = [ 'CLPHMJC', 'CLPHMJW', 'CLPHMJM' ]
-         tiploc = 'CLPHMJ2' if clapham_tiplocs.include?(tiploc)
+#         clapham_tiplocs = [ 'CLPHMJC', 'CLPHMJW', 'CLPHMJM' ]
+#         tiploc = 'CLPHMJ2' if clapham_tiplocs.include?(tiploc)
 
          # the wembley kludge
-         wembley_tiplocs = [ 'WMBY' ]
-         tiploc = 'WMBYDC' if wembley_tiplocs.include?(tiploc)
+#         wembley_tiplocs = [ 'WMBY' ]
+#         tiploc = 'WMBYDC' if wembley_tiplocs.include?(tiploc)
          tiplocs_final_array.push(tiploc)
       end
+=end
+      tiplocs_final_array = tiplocs_orig_array
 
        if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
          @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
