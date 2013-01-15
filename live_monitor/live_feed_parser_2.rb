@@ -360,11 +360,11 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    actual_timestamp = indiv_msg['body']['actual_timestamp']
 =end
    timetable_variation = indiv_msg['body']['timetable_variation']
-   puts 'timetable_variation = '+timetable_variation.to_s
+#   puts 'timetable_variation = '+timetable_variation.to_s
    secs_late = timetable_variation.to_i * 60
-   puts 'secs_late = '+secs_late.to_s
+#   puts 'secs_late = '+secs_late.to_s
    secs_late = 0 if secs_late < 0
-   puts 'secs_late = '+secs_late.to_s
+#   puts 'secs_late = '+secs_late.to_s
 
 =begin
    loc_stanox = indiv_msg['body']['loc_stanox']
