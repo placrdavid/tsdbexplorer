@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130115100715) do
+ActiveRecord::Schema.define(:version => 20130115162516) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -460,6 +460,27 @@ ActiveRecord::Schema.define(:version => 20130115100715) do
 
   add_index "tracked_trains", ["basic_schedule_uuid"], :name => "index_tracked_trains_on_basic_schedule_uuid"
   add_index "tracked_trains", ["train_id"], :name => "index_tracked_trains_on_train_id"
+
+  create_table "train_movements", :force => true do |t|
+    t.string   "basic_schedule_uuid", :limit => 36
+    t.string   "train_id",            :limit => 10
+    t.string   "event_type",          :limit => 32
+    t.integer  "timetable_variation"
+    t.integer  "secs_late"
+    t.string   "loc_stanox",          :limit => 5
+    t.string   "platform",            :limit => 64
+    t.boolean  "train_terminated"
+    t.string   "variation_status",    :limit => 32
+    t.string   "train_service_code",  :limit => 8
+    t.string   "toc_id",              :limit => 2
+    t.datetime "created_at",                        :null => false
+    t.datetime "updated_at",                        :null => false
+    t.integer  "planned_timestamp",   :limit => 8
+    t.integer  "actual_timestamp",    :limit => 8
+  end
+
+  add_index "train_movements", ["basic_schedule_uuid"], :name => "index_train_movements_on_basic_schedule_uuid"
+  add_index "train_movements", ["loc_stanox"], :name => "index_train_movements_on_loc_stanox"
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false

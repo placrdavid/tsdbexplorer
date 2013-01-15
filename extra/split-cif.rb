@@ -26,7 +26,7 @@ The extracted data will contain all TIPLOCs for all locations, including those n
 
 =end
 
-toc_code = []
+toc_code = ['LO']
 
 raise "Please set toc_code in the script" if toc_code == Array.new
 

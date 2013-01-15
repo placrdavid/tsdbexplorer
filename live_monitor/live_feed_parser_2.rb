@@ -159,6 +159,12 @@ def prepare_queries()
    delete from live_msgs where msg_type = $1 and basic_schedule_uuid = $2"
    @conn.prepare("delete_legacy_msgs_by_type_and_bsuid_plan",delete_legacy_msgs_by_type_and_bsuid_sql)
 
+   # store train movement messages (an archive/log, for performance analysis)
+   store_train_movements_sql = "INSERT INTO train_movements ( basic_schedule_uuid, train_id, event_type, planned_timestamp, actual_timestamp, timetable_variation, secs_late, loc_stanox, platform, train_terminated, variation_status, train_service_code, toc_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15 )"
+   @conn.prepare("store_train_movements_plan", store_train_movements_sql)
+
+
+
 
 #insert_stationupdate_sql = "INSERT INTO station_updates (tiploc_code, location_type, platform,  train_id,
 #     diff_from_timetable_secs,  planned_arrival_timestamp, predicted_arrival_timestamp,  planned_departure_timestamp,  predicted_departure_timestamp,  event_type,  
@@ -188,14 +194,17 @@ def prepare_queries()
 
 end
 
+
+=begin
 # cache a msg
 def redis_store_msg(msg_type, indiv_msg)
    redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+indiv_msg['body']['train_id'].to_s
    @redis[redis_key] = indiv_msg.to_json   
    puts Time.now.to_s+' stored msg to redis with key = '+redis_key.to_s  unless @quiet      
-
 end
+=end
 
+=begin
 # get a messages, by type
 def redis_get_msg(msg_type, train_id)
    redis_key=  'msg:'+msg_type.to_s+ ':train_id:'+train_id.to_s
@@ -208,9 +217,8 @@ def redis_get_msg(msg_type, train_id)
       retrieved_msg_hash = JSON.parse(retrieved_msg_json)
       return retrieved_msg_hash
    end
-   
 end
-
+=end
 
 
 # process the 0001 activation message
@@ -339,9 +347,41 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    msg_type = indiv_msg['header']['msg_type']      
    train_id = indiv_msg['body']['train_id']                     
    body = indiv_msg['body'].to_json 
+   # remove previous
    res = @conn.exec_prepared("delete_legacy_msgs_by_type_and_bsuid_plan", [msg_type, basic_schedule_uuid]) 
+   # store latest in live msgs table
    res = @conn.exec_prepared("store_live_msg_plan", [msg_type, basic_schedule_uuid, train_id, body, Time.new, Time.new]) 
 
+   # store latest in movement log table (used or performance)
+
+=begin
+   event_type = indiv_msg['body']['event_type']
+   planned_timestamp = indiv_msg['body']['planned_timestamp']
+   actual_timestamp = indiv_msg['body']['actual_timestamp']
+=end
+   timetable_variation = indiv_msg['body']['timetable_variation']
+   puts 'timetable_variation = '+timetable_variation.to_s
+   secs_late = timetable_variation.to_i * 60
+   puts 'secs_late = '+secs_late.to_s
+   secs_late = 0 if secs_late < 0
+   puts 'secs_late = '+secs_late.to_s
+
+=begin
+   loc_stanox = indiv_msg['body']['loc_stanox']
+   platform = indiv_msg['body']['platform']
+   train_terminated = indiv_msg['body']['train_terminated']
+   variation_status = indiv_msg['body']['variation_status']
+   train_service_code = indiv_msg['body']['train_service_code'] 
+   toc_id = indiv_msg['body']['toc_id']
+   created_at = Time.now
+   updated_at = Time.now
+=end  
+   # TODO log control from settings files
+   log_movements = true
+   if log_movements
+      res = @conn.exec_prepared("store_train_movements_plan", [basic_schedule_uuid, train_id, indiv_msg['body']['event_type'], indiv_msg['body']['planned_timestamp'], indiv_msg['body']['actual_timestamp'], timetable_variation, secs_late, indiv_msg['body']['loc_stanox'], indiv_msg['body']['platform'], indiv_msg['body']['train_terminated'], indiv_msg['body']['variation_status'], indiv_msg['body']['train_service_code'] , indiv_msg['body']['toc_id'], Time.now, Time.now]) 
+      puts 'logged a train movement'
+   end
 end
 
 # process the 0004 Unidentified Train message
