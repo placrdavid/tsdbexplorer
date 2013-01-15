@@ -388,7 +388,7 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    updated_at = Time.now
 =end  
    # TODO log control from settings files
-   log_movements = true
+   log_movements = false
    if log_movements
       res = @conn.exec_prepared("store_train_movements_plan", [basic_schedule_uuid, train_id, indiv_msg['body']['event_type'], planned_timestamp, actual_timestamp, timetable_variation, secs_late, indiv_msg['body']['loc_stanox'], indiv_msg['body']['platform'], indiv_msg['body']['train_terminated'], indiv_msg['body']['variation_status'], indiv_msg['body']['train_service_code'] , indiv_msg['body']['toc_id'], Time.now, Time.now]) 
 #      puts 'logged a train movement'
