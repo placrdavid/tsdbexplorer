@@ -359,13 +359,24 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    planned_timestamp = indiv_msg['body']['planned_timestamp']
    actual_timestamp = indiv_msg['body']['actual_timestamp']
 =end
-   timetable_variation = indiv_msg['body']['timetable_variation']
+      
+   timetable_variation = nil
+   timetable_variation = indiv_msg['body']['timetable_variation'] unless indiv_msg['body']['timetable_variation'] = ''
 #   puts 'timetable_variation = '+timetable_variation.to_s
-   secs_late = timetable_variation.to_i * 60
+   secs_late = nil
+   unless timetable_variation.nil?
+      secs_late = 0
+      secs_late = timetable_variation.to_i * 60
 #   puts 'secs_late = '+secs_late.to_s
-   secs_late = 0 if secs_late < 0
+      secs_late = 0 if secs_late < 0
 #   puts 'secs_late = '+secs_late.to_s
-
+   end
+   
+   planned_timestamp = nil
+   planned_timestamp = indiv_msg['body']['planned_timestamp'] unless indiv_msg['body']['planned_timestamp'].nil?
+   actual_timestamp = nil
+   actual_timestamp = indiv_msg['body']['actual_timestamp'] unless indiv_msg['body']['actual_timestamp'].nil?
+      
 =begin
    loc_stanox = indiv_msg['body']['loc_stanox']
    platform = indiv_msg['body']['platform']
@@ -379,8 +390,8 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    # TODO log control from settings files
    log_movements = false
    if log_movements
-      res = @conn.exec_prepared("store_train_movements_plan", [basic_schedule_uuid, train_id, indiv_msg['body']['event_type'], indiv_msg['body']['planned_timestamp'], indiv_msg['body']['actual_timestamp'], timetable_variation, secs_late, indiv_msg['body']['loc_stanox'], indiv_msg['body']['platform'], indiv_msg['body']['train_terminated'], indiv_msg['body']['variation_status'], indiv_msg['body']['train_service_code'] , indiv_msg['body']['toc_id'], Time.now, Time.now]) 
-      puts 'logged a train movement'
+      res = @conn.exec_prepared("store_train_movements_plan", [basic_schedule_uuid, train_id, indiv_msg['body']['event_type'], planned_timestamp, actual_timestamp, timetable_variation, secs_late, indiv_msg['body']['loc_stanox'], indiv_msg['body']['platform'], indiv_msg['body']['train_terminated'], indiv_msg['body']['variation_status'], indiv_msg['body']['train_service_code'] , indiv_msg['body']['toc_id'], Time.now, Time.now]) 
+#      puts 'logged a train movement'
    end
 end
 
