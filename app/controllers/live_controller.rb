@@ -257,12 +257,17 @@ puts 'time to run entire query = '+elapsed.to_s
        end      
 
       # Only display passenger schedules in normal mode
+      # TODO fix midnight wrapping bug 
       before_range = 1.hour
       after_range = 2.hour
+      #before_range = 3.hour
+      #after_range = 2.hour
       @range = Hash.new
       now = DateTime.now
+      #now = DateTime.now - 7.month + 10.hour
       @range[:from] = now -before_range
       @range[:to] = now + after_range
+
       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
 
       timetables_array=[] 
@@ -271,31 +276,18 @@ puts 'time to run entire query = '+elapsed.to_s
       @schedule.each do |schedule|
 
          # get the origin / destination - speed this up
-      #
+      #   p schedule
+
          bs_uuid = schedule[:obj].basic_schedule_uuid
-=begin
-      #         originloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LO')
-      #         destinloc = Location.where(:basic_schedule_uuid => bs_uuid.to_s).where(:location_type => 'LT')
-         originloc = schedule[:obj].basic_schedule.origin
-         destinloc = schedule[:obj].basic_schedule.terminate
-         origin_name = originloc.tiploc.tps_description
-         destin_name = destinloc.tiploc.tps_description
-         #timetable_hash['destination_name'] = destinloc[0].tiploc.tps_description
-      #         puts 'get origin...'
-      #puts 'standalone query = '+originloc[0].tiploc.tps_description
-      #puts 'integrated query = '+originloca.tiploc.tps_description
-      #         puts 'get destination...'
-      #puts 'standalone query = '+destinloc[0].tiploc.tps_description
-      #puts 'integrated query = '+destinloca.tiploc.tps_description
-=end
-#=begin
+
          origin_name = 'nil'
          destin_name = 'nil' 
 
          origin_name = schedule[:obj].basic_schedule.origin_name
          destin_name = schedule[:obj].basic_schedule.destin_name
-#=end
+
          # TODO could cause problems if now is after midnight
+         # TODO ensure that the date of the TS is set to tomorrow, for next_day events
          planned_update_event_day= now
          unless schedule[:obj].public_arrival.nil?
             planned_arrival_hhmm = schedule[:obj].public_arrival
@@ -309,6 +301,10 @@ puts 'time to run entire query = '+elapsed.to_s
             planned_ds_departure_day +=1 if schedule[:obj]['next_day_departure'] =~ (/(true|t|yes|y|1)$/i)               
             planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
          end
+         
+         #puts "planned_arrival_ts: "+planned_arrival_ts.to_s
+         #puts "planned_departure_ts: "+planned_departure_ts.to_s
+         
          matching_station_update = nil
          # get matching updates, based on uuid, and tiploc
          live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
@@ -329,15 +325,6 @@ puts 'time to run entire query = '+elapsed.to_s
                predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
                predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?
                
-=begin
-               unless planned_departure_hhmm.nil?
-                  puts ''+planned_departure_hhmm+' '+move_msg['event_type']+' from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
-               end
-               unless planned_arrival_hhmm.nil?
-                  puts ''+planned_arrival_hhmm+' '+move_msg['event_type']+' from '+origin_name+' to '+destin_name+' is '+move_msg['variation_status']+' (timetable_variation = '+move_msg['timetable_variation']+')'
-               end
-               puts 'diff_from_timetable_secs = '+diff_from_timetable_secs.to_s
-=end
             end
          #else
          #   puts 'catch exceptions where there is no match'
@@ -345,23 +332,12 @@ puts 'time to run entire query = '+elapsed.to_s
           
          # check the include conditions: is planned/predicted arrival/departure in past/future
          # values can be t/f/nil
+         # TODO SUSPECT THIS IS CAUSE OF MIDNIGHT WRAPPING BUG. SUSPECT THE DATES ON planned_arrival_ts etc are set to today, and so 23:20 appears to be gt 00:12
          planned_arrival_future = (Time.now < planned_arrival_ts) unless planned_arrival_ts.nil?
          predicted_arrival_future = (Time.now < predicted_arrival_timestamp) unless predicted_arrival_timestamp.nil?
          planned_departure_future = (Time.now < planned_departure_ts) unless planned_departure_ts.nil?
          predicted_departure_future = (Time.now < predicted_departure_timestamp) unless predicted_departure_timestamp.nil?
-=begin         
-         # if we have no live info
-         puts 'Time.now = '+Time.now.to_s
-         puts 'planned_arrival_ts = '+planned_arrival_ts.to_s unless planned_arrival_ts.nil?
-         puts 'planned_arrival_future = '+planned_arrival_future.to_s unless planned_arrival_future.nil?
-         puts 'predicted_arrival_timestamp = '+predicted_arrival_timestamp.to_s unless predicted_arrival_timestamp.nil?
-         puts 'predicted_arrival_future = '+predicted_arrival_future.to_s unless predicted_arrival_future.nil?
-         puts 'planned_departure_ts = '+planned_departure_ts.to_s unless planned_departure_ts.nil?
-         puts 'planned_departure_future = '+planned_departure_future.to_s unless planned_departure_future.nil?
-         puts 'predicted_departure_timestamp = '+predicted_departure_timestamp.to_s unless predicted_departure_timestamp.nil?
-         puts 'predicted_departure_future = '+predicted_departure_future.to_s unless predicted_departure_future.nil?
 
-=end
          # whether to include this departure (default=false)
          include_dep = false
          # hierarchy of checks of whether or not to include, set by first of 
@@ -369,26 +345,15 @@ puts 'time to run entire query = '+elapsed.to_s
          # that is not null
          if predicted_departure_future != nil
             include_dep = predicted_departure_future
-#            puts 'include condition set by predicted_departure_future'
          elsif predicted_arrival_future != nil
             include_dep = predicted_arrival_future
-#            puts 'include condition set by predicted_arrival_future'
          elsif planned_departure_future != nil
             include_dep = planned_departure_future
-#            puts 'include condition set by planned_departure_future'
          elsif planned_arrival_future != nil
             include_dep = planned_arrival_future
-#            puts 'include condition set by planned_arrival_future'
          else 
             include_dep = false
-#            puts 'everything null - thats bad'
          end
-#         puts 'include_dep: '+include_dep.to_s
-         #predicted_arrival_past
-         #planned_departure_past
-         #predicted_departure_past
-         
-         # ACTIVATION, ARRIVAL, LATE
          
          
          # for departures planned arrival is in future   AND/OR predicted 
