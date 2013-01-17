@@ -221,9 +221,11 @@ logfilepath = rails_root.to_s + '/'+script_dir+'/'+environment+'-'+logfile
 
 # the email of the sys admin, who should receive error emails
 error_msg_recipient_email = tsdb_settings['TFL_TRACKER']['error_msg_recipient_email']
-      
+
+log_movements = tsdb_settings['TFL_TRACKER']['log_movements'] 
+            
 # formulate the cmd line string
-ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbosity.to_s+"' '"+host.to_s+"' '"+port.to_s+"' '"+dbname.to_s+"' '"+username.to_s+"' '"+pwd.to_s+"' '"+networkrail_feedurl.to_s+"' '"+networkrail_login.to_s+"' '"+networkrail_passcode.to_s+"' '"+error_msg_recipient_email+"' '"+live_feeds.to_s+"' >> "+logfilepath.to_s+" &"
+ruby_cmdline_string = "ruby "+scriptpath.to_s+" '"+environment.to_s+"' '"+verbosity.to_s+"' '"+host.to_s+"' '"+port.to_s+"' '"+dbname.to_s+"' '"+username.to_s+"' '"+pwd.to_s+"' '"+networkrail_feedurl.to_s+"' '"+networkrail_login.to_s+"' '"+networkrail_passcode.to_s+"' '"+error_msg_recipient_email+"' '"+live_feeds.to_s+"' '"+log_movements.to_s+"' >> "+logfilepath.to_s+" &"
 puts ruby_cmdline_string
 
 # get the PID(s), or an empty string ('') if script is not running 

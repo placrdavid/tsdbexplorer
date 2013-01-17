@@ -52,3 +52,6 @@ TFL_TRACKER:
    networkrail_passcode: [nil]
    error_msg_recipient_email: [nil]
    live_feeds: '/topic/TRAIN_MVT_ALL_TOC'
+
+   # whether or not we archive train movements to a dedicated table - will impact performance
+   log_movements: true

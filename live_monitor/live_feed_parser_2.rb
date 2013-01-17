@@ -15,9 +15,7 @@ require 'yaml'
 require "pg"
 require "date"
 
-require 'redis'
-
-
+#require 'redis'
 
 STDOUT.sync = true 
 
@@ -33,6 +31,7 @@ STDOUT.sync = true
 @networkrail_login 
 @networkrail_passcode   
 @error_msg_recipient_email
+@log_movements
 
 # direct DB connection
 @conn
@@ -42,8 +41,7 @@ STDOUT.sync = true
 # stores the time we last received a msg from network rail
 @timelastmsg
 
-#
-@redis
+#@redis
 
 
 # open the DB connection
@@ -354,11 +352,6 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
 
    # store latest in movement log table (used or performance)
 
-=begin
-   event_type = indiv_msg['body']['event_type']
-   planned_timestamp = indiv_msg['body']['planned_timestamp']
-   actual_timestamp = indiv_msg['body']['actual_timestamp']
-=end
       
    timetable_variation = nil
    timetable_variation = indiv_msg['body']['timetable_variation'] unless indiv_msg['body']['timetable_variation'] = ''
@@ -378,6 +371,9 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    actual_timestamp = indiv_msg['body']['actual_timestamp'] unless indiv_msg['body']['actual_timestamp'].nil?
       
 =begin
+   event_type = indiv_msg['body']['event_type']
+   planned_timestamp = indiv_msg['body']['planned_timestamp']
+   actual_timestamp = indiv_msg['body']['actual_timestamp']
    loc_stanox = indiv_msg['body']['loc_stanox']
    platform = indiv_msg['body']['platform']
    train_terminated = indiv_msg['body']['train_terminated']
@@ -387,11 +383,15 @@ def process_trainmovement_msg(indiv_msg, tracked_train)
    created_at = Time.now
    updated_at = Time.now
 =end  
+
    # TODO log control from settings files
-   log_movements = false
-   if log_movements
+   #log_movements = false
+   #@log_movements
+   if @log_movements
       res = @conn.exec_prepared("store_train_movements_plan", [basic_schedule_uuid, train_id, indiv_msg['body']['event_type'], planned_timestamp, actual_timestamp, timetable_variation, secs_late, indiv_msg['body']['loc_stanox'], indiv_msg['body']['platform'], indiv_msg['body']['train_terminated'], indiv_msg['body']['variation_status'], indiv_msg['body']['train_service_code'] , indiv_msg['body']['toc_id'], Time.now, Time.now]) 
-#      puts 'logged a train movement'
+      puts 'logged a train movement'
+   else
+      puts "we're not logging a train movements"
    end
 end
 
@@ -519,7 +519,11 @@ module Poller
       subscribed_feeds_string = ARGV[11] 
       @subscribed_feeds = subscribed_feeds_string.split(',')
       
-      @redis = Redis.new
+      @log_movements = false
+      @log_movements = true if (ARGV[12].casecmp("true") == 0) || (ARGV[12].casecmp("t") == 0) || (ARGV[12].casecmp("1") == 0)
+      puts '@log_movements = '+@log_movements.to_s
+      
+      #@redis = Redis.new
 
       open_db_connection(@host, @dbname, @port, @dbusername, @dbuserpwd)      
       # prep our SQL queries
