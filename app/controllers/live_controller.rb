@@ -296,12 +296,7 @@ puts 'time to run entire query = '+elapsed.to_s
          # get matching cancel updates, based on uuid, and tiploc
          cancelled = false
          live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
-         if live_cancellation_msgs.size() ==0
-            cancelled = true
-#            puts 'we have a cancellation for '+bs_uuid.to_s
-         end
-
-
+         cancelled = true if live_cancellation_msgs.size() ==0
 
          if live_movement_msgs.size() ==1
             move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
@@ -369,6 +364,7 @@ puts 'time to run entire query = '+elapsed.to_s
             timetable_hash['predicted_arrival_timestamp'] = predicted_arrival_timestamp unless predicted_arrival_timestamp.nil?         
             timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
             timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
+            timetable_hash['predicted_departure_timestamp'] = nil if cancelled == true
             timetable_hash['predicted_departure_timestamp'] = predicted_departure_timestamp unless predicted_departure_timestamp.nil?         
             timetable_hash['event_type'] = nil
             timetable_hash['event_type'] =event_type unless event_type.nil?
