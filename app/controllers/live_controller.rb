@@ -357,10 +357,12 @@ puts 'time to run entire query = '+elapsed.to_s
             #timetable_hash['destination_name'] = destinloc[0].tiploc.tps_description
             timetable_hash['origin_name'] = origin_name
             timetable_hash['destination_name'] = destin_name         
-            timetable_hash['diff_from_timetable_secs'] = 0
+            timetable_hash['diff_from_timetable_secs'] = nil
+            timetable_hash['diff_from_timetable_secs'] = nil if cancelled == true
             timetable_hash['diff_from_timetable_secs'] = diff_from_timetable_secs unless diff_from_timetable_secs.nil?
             timetable_hash['planned_arrival_timestamp'] = planned_arrival_ts
             timetable_hash['predicted_arrival_timestamp'] = planned_arrival_ts
+            timetable_hash['predicted_arrival_timestamp'] = nil if cancelled == true
             timetable_hash['predicted_arrival_timestamp'] = predicted_arrival_timestamp unless predicted_arrival_timestamp.nil?         
             timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
             timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
