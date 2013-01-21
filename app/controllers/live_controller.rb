@@ -295,7 +295,7 @@ puts 'time to run entire query = '+elapsed.to_s
 
          # get matching cancel updates, based on uuid, and tiploc
          cancelled = false
-#         live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
+         live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
 #         if live_cancellation_msgs.size() >0
 #            cancelled = true
 #            puts 'we have a cancellation for '+bs_uuid.to_s
