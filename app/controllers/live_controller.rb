@@ -232,22 +232,6 @@ puts 'time to run entire query = '+elapsed.to_s
       tiplocs_string = params[:tiploc].upcase
       tiplocs_orig_array = tiplocs_string.split(',')
       
-=begin
-      tiplocs_final_array=[]                 
-
-      # for each update, for this station, construct an array of hashes
-      tiplocs_orig_array.each do |tiploc|
-         # A slection of kludges - this is NOT a longterm solution!! But fixes the CRS <-> tiploc conversion problem in the shortterm
-         # the klapham kludge. 
-#         clapham_tiplocs = [ 'CLPHMJC', 'CLPHMJW', 'CLPHMJM' ]
-#         tiploc = 'CLPHMJ2' if clapham_tiplocs.include?(tiploc)
-
-         # the wembley kludge
-#         wembley_tiplocs = [ 'WMBY' ]
-#         tiploc = 'WMBYDC' if wembley_tiplocs.include?(tiploc)
-         tiplocs_final_array.push(tiploc)
-      end
-=end
       tiplocs_final_array = tiplocs_orig_array
 
        if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
@@ -306,8 +290,18 @@ puts 'time to run entire query = '+elapsed.to_s
          #puts "planned_departure_ts: "+planned_departure_ts.to_s
          
          matching_station_update = nil
-         # get matching updates, based on uuid, and tiploc
+         # get matching movement updates, based on uuid, and tiploc
          live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
+
+         # get matching cancel updates, based on uuid, and tiploc
+         cancelled = false
+         live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
+         if live_cancellation_msgs.size() >0
+            cancelled = true
+            puts 'we have a cancellation for '+bs_uuid.to_s
+         end
+
+
 
          if live_movement_msgs.size() ==1
             move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
@@ -379,6 +373,7 @@ puts 'time to run entire query = '+elapsed.to_s
             timetable_hash['event_type'] = nil
             timetable_hash['event_type'] =event_type unless event_type.nil?
             timetable_hash['variation_status'] = 'NO REPORT'         
+            timetable_hash['variation_status'] = 'CANCELLED' if cancelled?
             timetable_hash['variation_status'] = variation_status unless variation_status.nil?
             timetable_hash['operator_ref'] = nil
             timetable_hash['service_name'] = nil
