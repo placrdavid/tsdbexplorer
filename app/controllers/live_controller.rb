@@ -294,12 +294,12 @@ puts 'time to run entire query = '+elapsed.to_s
          live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
 
          # get matching cancel updates, based on uuid, and tiploc
-         cancelled = false
-         live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
-         if live_cancellation_msgs.size() >0
-            cancelled = true
-            puts 'we have a cancellation for '+bs_uuid.to_s
-         end
+#         cancelled = false
+#         live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
+#         if live_cancellation_msgs.size() >0
+#            cancelled = true
+#            puts 'we have a cancellation for '+bs_uuid.to_s
+#         end
 
 
 
@@ -373,7 +373,7 @@ puts 'time to run entire query = '+elapsed.to_s
             timetable_hash['event_type'] = nil
             timetable_hash['event_type'] =event_type unless event_type.nil?
             timetable_hash['variation_status'] = 'NO REPORT'         
-            timetable_hash['variation_status'] = 'CANCELLED' if cancelled?
+#            timetable_hash['variation_status'] = 'CANCELLED' if cancelled?
             timetable_hash['variation_status'] = variation_status unless variation_status.nil?
             timetable_hash['operator_ref'] = nil
             timetable_hash['service_name'] = nil
