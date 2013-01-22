@@ -9,7 +9,7 @@ require 'json'
 #require "lib/performance.rb"
 #require "performance.rb"
 #require "Performance"
-include "Performance"
+#include "Performance"
 
 class LiveController < ApplicationController
    
