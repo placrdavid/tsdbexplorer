@@ -61,7 +61,8 @@ class LiveController < ApplicationController
       # array of stations we wish to get performance stats about
       crs_tiplocs = {
       "LST" => {:tiplocs => 'LIVST'},
-      "OLD" => {:tiplocs => 'OLDST'},
+      "OLD" => {:tiplocs => 'OLDST'}
+      }
 
       crs_tiplocs.each do |crs, station_info|
       # get lat, lon, name
