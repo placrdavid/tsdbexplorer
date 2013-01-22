@@ -10,10 +10,32 @@ class LiveController < ApplicationController
    
 
    # a shortterm shortcut to just get performance for a small number of stations
-   def london_performance_json
+   def london_performance_json_test
       lst_hash = {:lat => 51.517989, :lon => -0.081426, :crs => 'LST', :name => "London Liverpool Street", :avg_secs_late => 30, :sample_size => 12}
       old_hash = {:lat => 51.525830, :lon => -0.088535, :crs => 'OLD', :name => "Old Street", :avg_secs_late => 20, :sample_size => 3}
       performance_array = [lst_hash, old_hash]
+      # transform to json, and respond
+      output_json = performance_array.to_json
+      send_data output_json, :type => "text/plain", :disposition => 'inline'
+   end
+
+   # a shortterm shortcut to just get performance for a small number of stations
+   def london_performance_json
+      performance_array = []
+      # array of stations we wish to get performance stats about
+      crs_tiplocs = {"LST" => 'LIVST',"OLD" => 'OLDST',"MOG" => 'MRGT',"SDC" => 'SHRDHST',"HOX" => 'HOXTON',"FST" => 'FENCHRS',"CST" => 'CANONST',"ZFD" => 'FRNDNLT',"BET" => 'BTHNLGR',"ZWL" => 'WCHAPEL',"CTK" => 'CTMSLNK',"BFR" => 'BLFR',"HGG" => 'HAGGERS',"LBG" => 'LNDNBDG,LNDNBD,LNDNBDE,LNDNBAL,LNDNB9,LNDNB10,LNDNB11,LNDNB12,LNDNB13,LNDNB14,LNDNB1,LNDNB16,LNDN490',"CBH" => 'CAMHTH',"SDE" => 'SHADWEL',"EXR" => 'ESSEXRD',"WAE" => 'WLOE',"DLJ" => 'DALS',"LOF" => 'LONFLDS',"WPE" => 'WAPPING',"KGX" => 'KNGX',"DLK" => 'DALSKLD',"WAT" => 'WATRLMN'}
+      crs_tiplocs.each do |crs, tiploc_code_csv|
+         puts 'getting stats for crs '+crs+' tiplocs '+tiploc_code_csv
+         Performance.get_station_performance(tiploc_code_csv, 'departures')
+
+         station_hash = {:lat => 51.517989, :lon => -0.081426, :crs => crs, :name => "London Liverpool Street", :avg_secs_late => 30, :sample_size => 12}
+         performance_array.push(station_hash)
+      end
+
+
+#      lst_hash = {:lat => 51.517989, :lon => -0.081426, :crs => 'LST', :name => "London Liverpool Street", :avg_secs_late => 30, :sample_size => 12}
+#      old_hash = {:lat => 51.525830, :lon => -0.088535, :crs => 'OLD', :name => "Old Street", :avg_secs_late => 20, :sample_size => 3}
+#      performance_array = [lst_hash, old_hash]
       # transform to json, and respond
       output_json = performance_array.to_json
       send_data output_json, :type => "text/plain", :disposition => 'inline'
