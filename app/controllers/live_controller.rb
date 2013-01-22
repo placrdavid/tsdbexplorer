@@ -99,8 +99,7 @@ class LiveController < ApplicationController
          p performance_hash
          avg_secs_late = performance_hash[:avg_secs_late]
          sample_size = performance_hash[:n_live_deps]
-
-         station_hash = {:crs => crs, :avg_secs_late => avg_secs_late, :sample_size => sample_size}
+         station_hash = {:crs => crs, :lon => station_info[:lon], :lat => station_info[:lat], :name => station_info[:name], :avg_secs_late => avg_secs_late, :sample_size => sample_size}
          performance_array.push(station_hash)
       end
 
