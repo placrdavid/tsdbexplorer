@@ -10,9 +10,9 @@ cd $(dirname $0) #change directory to the diretory this file is in
 rails_env_value='development'
 verbosity_value='normal'
 RVM_VERSION='1.9.3'
-GEMSET_VERSION='ruby193rails32'
+GEMSET_VERSION='ruby193rails3'
 # check if RVM is installed, and make it available
-RVM_INSTALLED=false 
+RVM_INSTALLED=false
 # Load RVM into a shell session *as a function*
 if [[ -s "$HOME/.rvm/scripts/rvm" ]] ; then
   # First try to load from a user install

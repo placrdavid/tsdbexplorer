@@ -51,7 +51,7 @@ puts 'n= '+@schedule.size.to_s
       @schedule.each do |schedule|
 
          # get the origin / destination - speed this up
-         p schedule
+#         p schedule
          bs_uuid = schedule[:obj].basic_schedule_uuid
 
          

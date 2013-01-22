@@ -7,7 +7,6 @@
 #    ruby train_performance_stats.rb development normal
 
 
-runStartTime = Time.now
 
 quiet = (ARGV.include? 'quiet')
 
@@ -20,20 +19,22 @@ puts "Initialising rails environment " + ENV['RAILS_ENV'] unless quiet
 require "#{File.dirname('.')}/config/environment"
 
 
-puts 'starting loop'
-
-
 # performance stats
 require Rails.root + "lib/performance.rb"
-Performance.test
-puts 'ran the test'
 
-Performance.get_station_performance('GOSPLOK', 'departures')
-puts 'got stoke performance stats'
+runStartTime = Time.now
 
+# array of stations we wish to get performance stats about
+crs_tiplocs = {"LST" => 'LIVST',"OLD" => 'OLDST',"MOG" => 'MRGT',"SDC" => 'SHRDHST',"HOX" => 'HOXTON',"FST" => 'FENCHRS',"CST" => 'CANONST',"ZFD" => 'FRNDNLT',"BET" => 'BTHNLGR',"ZWL" => 'WCHAPEL',"CTK" => 'CTMSLNK',"BFR" => 'BLFR',"HGG" => 'HAGGERS',"LBG" => 'LNDNBDG,LNDNBD,LNDNBDE,LNDNBAL,LNDNB9,LNDNB10,LNDNB11,LNDNB12,LNDNB13,LNDNB14,LNDNB1,LNDNB16,LNDN490',"CBH" => 'CAMHTH',"SDE" => 'SHADWEL',"EXR" => 'ESSEXRD',"WAE" => 'WLOE',"DLJ" => 'DALS',"LOF" => 'LONFLDS',"WPE" => 'WAPPING',"KGX" => 'KNGX',"DLK" => 'DALSKLD',"WAT" => 'WATRLMN'}
+crs_tiplocs.each do |crs, tiploc_code_csv|
+   puts 'getting stats for crs '+crs+' tiplocs '+tiploc_code_csv
+   Performance.get_station_performance(tiploc_code_csv, 'departures')
+
+end
+
+puts 'got performance stats'
 
 puts "Execution time: "  + (Time.now - runStartTime).to_s
-
 puts "DONE" unless quiet
 
 
