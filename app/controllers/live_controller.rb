@@ -8,8 +8,8 @@ require 'json'
 #require Rails.root + "lib/performance.rb"
 #require "lib/performance.rb"
 #require "performance.rb"
-#require "Performance"
-#include "Performance"
+require "Performance"
+#include "Performance"# death
 
 class LiveController < ApplicationController
    
