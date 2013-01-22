@@ -87,7 +87,8 @@ class Performance
 
 #      puts 'avg_secs_late = '+avg_secs_late.to_s
       # TODO dump to a table
-      return avg_secs_late
+      performance_hash = {:tiplocs => tiplocs, :avg_secs_late => avg_secs_late, :n_live_deps => n_live_deps}
+      return performance_hash
    end
 
 end
