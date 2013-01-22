@@ -22,8 +22,8 @@ class Performance
       
       tiplocs_final_array = tiplocs_orig_array
 
-puts 'tiplocs_final_array'
-p tiplocs_final_array
+#puts 'tiplocs_final_array'
+#p tiplocs_final_array
 #       if (deps_or_apps == 'ARRIVALS')
          @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
 #       else
@@ -41,8 +41,8 @@ p tiplocs_final_array
 
       timetables_array=[] 
 
-puts 'got schedules'
-puts 'n= '+@schedule.size.to_s
+#puts 'got schedules'
+#puts 'n= '+@schedule.size.to_s
 
       n_live_deps = 0
       cum_secs_late = 0
@@ -85,8 +85,9 @@ puts 'n= '+@schedule.size.to_s
       avg_secs_late = nil
       avg_secs_late = cum_secs_late/n_live_deps if n_live_deps>0
 
-      puts 'avg_secs_late = '+avg_secs_late.to_s
+#      puts 'avg_secs_late = '+avg_secs_late.to_s
       # TODO dump to a table
+      return avg_secs_late
    end
 
 end
