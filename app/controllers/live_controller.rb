@@ -57,11 +57,39 @@ class LiveController < ApplicationController
       "KGX" => 'KNGX',
       "DLK" => 'DALSKLD',
       "WAT" => 'WATRLMN'}
-=end
       # array of stations we wish to get performance stats about
       crs_tiplocs = {
       "LST" => {:tiplocs => 'LIVST'},
       "OLD" => {:tiplocs => 'OLDST'}
+      }
+=end
+
+      crs_tiplocs = {
+
+"LST" => {:lon => -0.081426,:lat => 51.517989,:name=>"London Liverpool Street"},
+"OLD" => {:lon => -0.088535,:lat => 51.52583,:name=>"Old Street"},
+"MOG" => {:lon => -0.088943,:lat => 51.51849,:name=>"Moorgate (Great Northern)"},
+"SDC" => {:lon => -0.075246,:lat => 51.523374,:name=>"Shoreditch High Street"},
+"HOX" => {:lon => -0.075682,:lat => 51.53151,:name=>"Hoxton"},
+"FST" => {:lon => -0.078897,:lat => 51.511644,:name=>"London Fenchurch Street"},
+"CST" => {:lon => -0.090293,:lat => 51.511381,:name=>"London Cannon Street"},
+"ZFD" => {:lon => -0.105205,:lat => 51.520165,:name=>"Farringdon (London)"},
+"BET" => {:lon => -0.059568,:lat => 51.523916,:name=>"Bethnal Green"},
+"ZWL" => {:lon => -0.059757,:lat => 51.519467,:name=>"Whitechapel"},
+"CTK" => {:lon => -0.10359,:lat => 51.513934,:name=>"City Thameslink"},
+"BFR" => {:lon => -0.103332,:lat => 51.511808,:name=>"London Blackfriars"},
+"HGG" => {:lon => -0.075667,:lat => 51.538704,:name=>"Haggerston"},
+"LBG" => {:lon => -0.086088,:lat => 51.505107,:name=>"London Bridge"},
+"CBH" => {:lon => -0.057279,:lat => 51.531971,:name=>"Cambridge Heath"},
+"SDE" => {:lon => -0.056934,:lat => 51.511282,:name=>"Shadwell"},
+"EXR" => {:lon => -0.096276,:lat => 51.540704,:name=>"Essex Road"},
+"WAE" => {:lon => -0.108898,:lat => 51.504074,:name=>"London Waterloo"},
+"DLJ" => {:lon => -0.075138,:lat => 51.546114,:name=>"Dalston Junction"},
+"LOF" => {:lon => -0.057753,:lat => 51.541151,:name=>"London Fields"},
+"WPE" => {:lon => -0.055931,:lat => 51.504386,:name=>"Wapping"},
+"KGX" => {:lon => -0.122926,:lat => 51.530882,:name=>"London Kings Cross"},
+"DLK" => {:lon => -0.075701,:lat => 51.548147,:name=>"Dalston Kingsland"},
+"WAT" => {:lon => -0.113109,:lat => 51.503297,:name=>"London Waterloo"}
       }
 
       crs_tiplocs.each do |crs, station_info|
