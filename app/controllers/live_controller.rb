@@ -8,16 +8,17 @@ require 'json'
 
 class LiveController < ApplicationController
    
-=begin   # a shortterm shortcut to just get performance for a small number of stations
+
+   # a shortterm shortcut to just get performance for a small number of stations
    def london_performance_json
-      lst_hash = {:lat => 51.517989, :lon => -0.081426, :crs => 'LST', :name => "London Liverpool Street", :avg_secs_late => 30, :sample_size => 12]}
-      old_hash = {:lat => 51.52583, :lon => -0.088535, :crs => 'OLD', :name => "Old Street", :avg_secs_late => 20, :sample_size => 3]}
+      lst_hash = {:lat => 51.517989, :lon => -0.081426, :crs => 'LST', :name => "London Liverpool Street", :avg_secs_late => 30, :sample_size => 12}
+      old_hash = {:lat => 51.525830, :lon => -0.088535, :crs => 'OLD', :name => "Old Street", :avg_secs_late => 20, :sample_size => 3}
       performance_array = [lst_hash, old_hash]
       # transform to json, and respond
       output_json = performance_array.to_json
       send_data output_json, :type => "text/plain", :disposition => 'inline'
    end
-=end
+
    # Return all known live updates for a station, in json format
    def stations_updates_json
 
