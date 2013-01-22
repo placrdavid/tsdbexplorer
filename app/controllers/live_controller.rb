@@ -5,9 +5,10 @@
 ###########################################################
 
 require 'json'
-require Rails.root + "lib/performance.rb"
-#require "lib/performance.rb"
-#require "performance.rb"
+#require Rails.root + "lib/performance.rb" # works
+#require "lib/performance.rb" # death
+#require "performance.rb" # works
+require "performance" # works
 #require "Performance"#megadeath
 #include "Performance"# death
 
