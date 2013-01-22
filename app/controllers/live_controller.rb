@@ -5,6 +5,11 @@
 ###########################################################
 
 require 'json'
+#require Rails.root + "lib/performance.rb"
+#require "lib/performance.rb"
+#require "performance.rb"
+#require "Performance"
+include "Performance"
 
 class LiveController < ApplicationController
    
