@@ -29,6 +29,53 @@ class LiveController < ApplicationController
    def london_performance_json
 
       performance_array = []
+
+=begin
+      # array of stations we wish to get performance stats about
+      crs_tiplocs = {
+      "LST" => 'LIVST',
+      "OLD" => 'OLDST',
+      "MOG" => 'MRGT',
+      "SDC" => 'SHRDHST',
+      "HOX" => 'HOXTON',
+      "FST" => 'FENCHRS',
+      "CST" => 'CANONST',
+      "ZFD" => 'FRNDNLT',
+      "BET" => 'BTHNLGR',
+      "ZWL" => 'WCHAPEL',
+      "CTK" => 'CTMSLNK',
+      "BFR" => 'BLFR',
+      "HGG" => 'HAGGERS',
+      "LBG" => 'LNDNBDG,LNDNBD,LNDNBDE,LNDNBAL,LNDNB9,LNDNB10,LNDNB11,LNDNB12,LNDNB13,LNDNB14,LNDNB1,LNDNB16,LNDN490',
+      "CBH" => 'CAMHTH',
+      "SDE" => 'SHADWEL',
+      "EXR" => 'ESSEXRD',
+      "WAE" => 'WLOE',
+      "DLJ" => 'DALS',
+      "LOF" => 'LONFLDS',
+      "WPE" => 'WAPPING',
+      "KGX" => 'KNGX',
+      "DLK" => 'DALSKLD',
+      "WAT" => 'WATRLMN'}
+=end
+      # array of stations we wish to get performance stats about
+      crs_tiplocs = {
+      "LST" => {:tiplocs => 'LIVST'},
+      "OLD" => {:tiplocs => 'OLDST'},
+
+      crs_tiplocs.each do |crs, station_info|
+      # get lat, lon, name
+         puts 'getting stats for crs '+crs+' tiplocs '+station_info[:tiplocs]
+         performance_hash = Performance.get_station_performance(station_info[:tiplocs], 'departures')
+         p performance_hash
+         avg_secs_late = performance_hash[:avg_secs_late]
+         sample_size = performance_hash[:n_live_deps]
+
+         station_hash = {:crs => crs, :avg_secs_late => avg_secs_late, :sample_size => sample_size}
+         performance_array.push(station_hash)
+      end
+
+=begin
       # array of stations we wish to get performance stats about
       crs_tiplocs = {"LST" => 'LIVST',"OLD" => 'OLDST',"MOG" => 'MRGT',"SDC" => 'SHRDHST',"HOX" => 'HOXTON',"FST" => 'FENCHRS',"CST" => 'CANONST',"ZFD" => 'FRNDNLT',"BET" => 'BTHNLGR',"ZWL" => 'WCHAPEL',"CTK" => 'CTMSLNK',"BFR" => 'BLFR',"HGG" => 'HAGGERS',"LBG" => 'LNDNBDG,LNDNBD,LNDNBDE,LNDNBAL,LNDNB9,LNDNB10,LNDNB11,LNDNB12,LNDNB13,LNDNB14,LNDNB1,LNDNB16,LNDN490',"CBH" => 'CAMHTH',"SDE" => 'SHADWEL',"EXR" => 'ESSEXRD',"WAE" => 'WLOE',"DLJ" => 'DALS',"LOF" => 'LONFLDS',"WPE" => 'WAPPING',"KGX" => 'KNGX',"DLK" => 'DALSKLD',"WAT" => 'WATRLMN'}
       crs_tiplocs.each do |crs, tiploc_code_csv|
@@ -42,11 +89,7 @@ class LiveController < ApplicationController
          station_hash = {:crs => crs, :avg_secs_late => avg_secs_late, :sample_size => sample_size}
          performance_array.push(station_hash)
       end
-
-
-#      lst_hash = {:lat => 51.517989, :lon => -0.081426, :crs => 'LST', :name => "London Liverpool Street", :avg_secs_late => 30, :sample_size => 12}
-#      old_hash = {:lat => 51.525830, :lon => -0.088535, :crs => 'OLD', :name => "Old Street", :avg_secs_late => 20, :sample_size => 3}
-#      performance_array = [lst_hash, old_hash]
+=end
       # transform to json, and respond
       output_json = performance_array.to_json
       send_data output_json, :type => "text/plain", :disposition => 'inline'
