@@ -34,11 +34,11 @@ class LiveController < ApplicationController
       crs_tiplocs.each do |crs, tiploc_code_csv|
          puts 'getting stats for crs '+crs+' tiplocs '+tiploc_code_csv
          performance_hash = Performance.get_station_performance(tiploc_code_csv, 'departures')
-
+         p performance_hash
          avg_secs_late = performance_hash['avg_secs_late']
          sample_size = performance_hash['n_live_deps']
 
-         station_hash = {:lat => 51.517989, :lon => -0.081426, :crs => crs, :name => "London Liverpool Street", :avg_secs_late => avg_secs_late, :sample_size => 12}
+         station_hash = {:lat => 51.517989, :lon => -0.081426, :crs => crs, :name => "London Liverpool Street", :avg_secs_late => avg_secs_late, :sample_size => sample_size}
          performance_array.push(station_hash)
       end
 
