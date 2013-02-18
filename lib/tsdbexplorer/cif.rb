@@ -146,6 +146,8 @@ module TSDBExplorer
 
       while(!cif_data.eof)
 
+
+#        puts 'start of while loop'
         record = TSDBExplorer::CIF::parse_record(cif_data.gets)
 
         return record if record.is_a? Struct
@@ -154,6 +156,7 @@ module TSDBExplorer
 
         if record.is_a? TSDBExplorer::CIF::TiplocRecord
 
+#          puts 'got a tiploc'
           if record.action == "I"
 
             # TIPLOC Insert
@@ -199,6 +202,7 @@ module TSDBExplorer
 
         elsif record.is_a? TSDBExplorer::CIF::BasicScheduleRecord
 
+#          puts 'got a basicsched'
           # Check if we have any pending TIPLOCs to insert, and if so,
           # process them now
 
@@ -225,6 +229,8 @@ module TSDBExplorer
 
           if record.transaction_type == "N" || record.transaction_type == "R"
 
+
+#            puts 'processing a location record'
             # Schedule cancellations (BS records with the STP indicator set to
             # 'C') have no locations, so must be processed separately
 
@@ -249,7 +255,8 @@ module TSDBExplorer
 
 
               # Read in all records up to and including the next LT record
-
+ 
+#              puts 'Read in all records up to and including the next LT record'
               location_record = TSDBExplorer::CIF::LocationRecord.new
 
               seq = 10
@@ -401,9 +408,9 @@ module TSDBExplorer
 
 
       # Save the record of this CIF file
-
+      puts 'about to save this CIF file record'
       cif_file_record.save
-
+      puts 'saved CIF file record'
 
       # If we're using PostgreSQL and we aren't in the test environment
       # (which runs tests in a transaction), VACUUM ANALYZE the tables
@@ -462,6 +469,8 @@ module TSDBExplorer
 
     def CIF.process_pending(pending)
 
+#      puts 'processing pending records '+pending.keys.count.to_s
+
       # Process all the pending transactions
 
       orig_level = ActiveRecord::Base.logger.level
@@ -469,10 +478,24 @@ module TSDBExplorer
 
       pending.keys.each do |model_object|
 
-        eval(model_object).import pending[model_object][:cols], pending[model_object][:rows], :validate => false
-
+        # eval barfs when doing insert of lots of records, so break up into chunks
+        chunksize = 5000
+        nrecords = pending[model_object][:rows].count
+#        puts 'model_object = '+model_object.to_s
+#        puts 'pending[model_object][:rows].count '+pending[model_object][:rows].count.to_s
+        lowerlimit = 0
+        while lowerlimit <= nrecords
+           upperlimit = lowerlimit + chunksize
+#           puts 'lowerlimit = '+lowerlimit.to_s+' upperlimit = '+upperlimit.to_s
+   #        eval(model_object).import pending[model_object][:cols], pending[model_object][:rows][0..1000], :validate => false
+           eval(model_object).import pending[model_object][:cols], pending[model_object][:rows][lowerlimit..(upperlimit-1)], :validate => false
+   #        eval(model_object).import pending[model_object][:cols], pending[model_object][:rows], :validate => false
+#           puts 'post eval'
+           lowerlimit = upperlimit
+           upperlimit = upperlimit + chunksize
+        end
         pending[model_object][:rows] = []
-
+#        puts 'result rows'
       end
 
       ActiveRecord::Base.logger.level = orig_level
