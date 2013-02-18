@@ -175,6 +175,8 @@ class LiveController < ApplicationController
          origin_name = schedule[:obj].basic_schedule.origin_name
          destin_name = schedule[:obj].basic_schedule.destin_name
 
+#         train_uid = schedule[:obj].train_uid
+         
          # TODO could cause problems if now is after midnight
          # TODO ensure that the date of the TS is set to tomorrow, for next_day events
          planned_update_event_day= now
