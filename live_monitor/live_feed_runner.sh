@@ -1,6 +1,9 @@
 #!/bin/sh
 # Runs the live feed parser
 
+# source the .profile file, which adds rbenv paths to PATH, allowing cron to run ruby files
+source /root/.profile
+
 cd $(dirname $0) #change directory to the diretory this file is in
 
 # load our settings file
@@ -34,4 +37,11 @@ export RAILS_ENV=$rails_env_value
 export VERBOSITY=$verbosity_value
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-ruby live_feed_runner.rb $RAILS_ENV $VERBOSITY $DIR >> live_feed_runner.log
+printf "about to run script\n"
+
+echo $PATH
+rbenv versions
+
+ruby live_feed_runner.rb $RAILS_ENV $VERBOSITY $DIR >> live_feed_runner.log 2>&1
+
+printf "DONE"
