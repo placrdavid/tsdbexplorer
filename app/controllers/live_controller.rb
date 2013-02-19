@@ -175,7 +175,7 @@ class LiveController < ApplicationController
          origin_name = schedule[:obj].basic_schedule.origin_name
          destin_name = schedule[:obj].basic_schedule.destin_name
 
-#         train_uid = schedule[:obj].train_uid
+         train_uid = schedule[:obj].basic_schedule.train_uid
          
          # TODO could cause problems if now is after midnight
          # TODO ensure that the date of the TS is set to tomorrow, for next_day events
@@ -264,6 +264,7 @@ class LiveController < ApplicationController
             timetable_hash['platform'] = schedule[:obj].platform
             timetable_hash['origin_name'] = origin_name
             timetable_hash['destination_name'] = destin_name         
+            timetable_hash['train_uid'] = train_uid         
 
             timetable_hash['diff_from_timetable_secs'] = 0
             timetable_hash['diff_from_timetable_secs'] = diff_from_timetable_secs unless diff_from_timetable_secs.nil?
