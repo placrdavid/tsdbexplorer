@@ -225,7 +225,11 @@ class LiveController < ApplicationController
 #HARRY MOVED THIS DOWN HERE
             # get matching cancel updates, based on uuid, and tiploc
             live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
-        #NOPE NOT WORKING                cancelled = true if live_cancellation_msgs.size() ==1
+        #NOPE NOT WORKING                cancelled = true 
+            if live_cancellation_msgs.size() ==1
+               puts 'got a cancellation for '+bs_uuid.to_s
+               cancelled = true
+            end
          end
           
          # check the include conditions: is planned/predicted arrival/departure in past/future
