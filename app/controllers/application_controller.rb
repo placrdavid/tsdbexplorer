@@ -26,6 +26,24 @@ class ApplicationController < ActionController::Base
   helper_method :advanced_mode?
 
 
+  # === methods for converting a hash to json-p === #
+  
+  # converts a hash to json, with some syntax beautification
+  # Wrap in a JSONP callback function if 'callback' param is given
+  def hash_to_json(hash, callback)
+    
+    output_json =  hash.to_json()
+    output_json.gsub!('},' , "},\n") #add some newlines for a tad more readability
+    output_json.gsub!('[' , "[\n")            
+
+    callback = params['callback'] if callback.nil?
+
+    output_json = callback + "(" + output_json + ");" if not callback.nil?
+    return output_json  
+  end
+  
+
+
   # Identify if the site is in maintenance mode, and if so, display a holding page
 
   def in_maintenance_mode?
