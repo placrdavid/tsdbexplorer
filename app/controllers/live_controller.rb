@@ -26,6 +26,55 @@ class LiveController < ApplicationController
    end
 
    # a shortterm shortcut to just get performance for a small number of stations
+   def newcastle_performance_json
+
+      performance_array = []
+
+
+      # TODO get nearest request from transport API
+      #http://transportapi.com/v3/uk/train/stations/near.json?lon=-1.61778&lat=54.9782520
+      # endpoint should also return tiplocss
+      crs_tiplocs = {
+"MAS" => {:name => "Manors", :lon => -1.604741, :lat => 54.972763,:distance => 1800, :tiplocs =>'MANORS'},
+"NCL" => {:name => "Newcastle", :lon => -1.61728, :lat => 54.9684,:distance => 1912, :tiplocs =>'NWCSTLE'},
+"DOT" => {:name => "Dunston", :lon => -1.642044, :lat => 54.950054,:distance => 6099, :tiplocs =>'DNSN'},
+"MCE" => {:name => "Metro Centre", :lon => -1.665626, :lat => 54.958748,:distance => 6533, :tiplocs =>'GTSHDMC'},
+"HEW" => {:name => "Heworth", :lon => -1.555766, :lat => 54.951567,:distance => 8627, :tiplocs =>'HEWORTH'},
+"BLO" => {:name => "Blaydon", :lon => -1.712581, :lat => 54.965787,:distance => 10827, :tiplocs =>'BLAYDON'},
+"APN" => {:name => "Airport (Newcastle)", :blon => -1.711047, :lat => 55.035948,:distance => 15272, :tiplocs =>'AIRP'},
+"BNR" => {:name => "Brockley Whins", :lon => -1.461353, :lat => 54.959543,:distance => 17787, :tiplocs =>'BRWHINS'},
+"CRM" => {:name => "Cramlington", :lon => -1.598595, :lat => 55.087766,:distance => 21379, :tiplocs =>'CRMLNGT'},
+"WYM" => {:name => "Wylam", :lon => -1.814062, :lat => 54.97497,:distance => 21859, :tiplocs =>'WYLAM'},
+"EBL" => {:name => "East Boldon", :lon => -1.420314, :lat => 54.946414,:distance => 22832, :tiplocs =>'EBOLDON'},
+"CLS" => {:name => "Chester Le Street", :lon => -1.578015, :lat => 54.854593,:distance => 24356, :tiplocs =>'CLST'},
+"SEB" => {:name => "Seaburn", :lon => -1.386693, :lat => 54.929534,:distance => 27403, :tiplocs =>'SEABURN'},
+"PRU" => {:name => "Prudhoe", :lon => -1.864866, :lat => 54.965827,:distance => 27611, :tiplocs =>'PRUDHOE'},
+"STZ" => {:name => "St Peters", :lon => -1.383802, :lat => 54.911439,:distance => 29088, :tiplocs =>'SNDRMNK'},
+"SUN" => {:name => "Sunderland", :lon => -1.382304, :lat => 54.905338,:distance => 29779, :tiplocs =>'SNDRLND'},
+"MPT" => {:name => "Morpeth", :lon => -1.683075, :lat => 55.162375,:distance => 36528, :tiplocs =>'MRPTHRP'},
+"DHM" => {:name => "Durham", :lon => -1.581752, :lat => 54.779389,:distance => 38688, :tiplocs =>'DRHM'},
+"PEG" => {:name => "Pegswood", :lon => -1.644166, :lat => 55.178128,:distance => 38979, :tiplocs =>'PEGSWD'}
+	}
+
+      crs_tiplocs.each do |crs, station_info|
+      # get lat, lon, name
+         #puts 'getting stats for crs '+crs+' tiplocs '+station_info[:tiplocs]
+         performance_hash = Performance.get_station_performance(station_info[:tiplocs], 'departures')
+         p performance_hash
+         avg_secs_late = performance_hash[:avg_secs_late]
+         sample_size = performance_hash[:n_live_deps]
+         station_hash = {:crs => crs, :lon => station_info[:lon], :lat => station_info[:lat], :name => station_info[:name], :avg_secs_late => avg_secs_late, :sample_size => sample_size}
+         performance_array.push(station_hash)
+      end
+
+      # transform to json, and respond
+      output_json = performance_array.to_json
+      send_data output_json, :type => "text/plain", :disposition => 'inline'
+   end
+   
+   
+   
+   # a shortterm shortcut to just get performance for a small number of stations
    def london_performance_json
 
       performance_array = []
@@ -94,7 +143,7 @@ class LiveController < ApplicationController
 
       crs_tiplocs.each do |crs, station_info|
       # get lat, lon, name
-         puts 'getting stats for crs '+crs+' tiplocs '+station_info[:tiplocs]
+         #puts 'getting stats for crs '+crs+' tiplocs '+station_info[:tiplocs]
          performance_hash = Performance.get_station_performance(station_info[:tiplocs], 'departures')
          p performance_hash
          avg_secs_late = performance_hash[:avg_secs_late]
@@ -139,24 +188,24 @@ class LiveController < ApplicationController
       
       tiplocs_final_array = tiplocs_orig_array
 
-       if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
+      if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
          @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
-       else
+      else
          @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure)
-       end      
+      end      
 
       # Only display passenger schedules in normal mode
-      # TODO fix midnight wrapping bug 
+      now = DateTime.now
+      debug  =false
+	  if debug
+      	now = DateTime.now.midnight
+      	now = now + 10.minutes
+  	  end
       before_range = 1.hour
       after_range = 2.hour
-      #before_range = 3.hour
-      #after_range = 2.hour
       @range = Hash.new
-      now = DateTime.now
-      #now = DateTime.now - 7.month + 10.hour
       @range[:from] = now -before_range
       @range[:to] = now + after_range
-
       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
 
       timetables_array=[] 
@@ -165,7 +214,8 @@ class LiveController < ApplicationController
       @schedule.each do |schedule|
 
          # get the origin / destination - speed this up
-      #   p schedule
+         #puts '============================================'
+         #p schedule
 
          bs_uuid = schedule[:obj].basic_schedule_uuid
 
@@ -177,25 +227,30 @@ class LiveController < ApplicationController
 
          train_uid = schedule[:obj].basic_schedule.train_uid
          
-         # TODO could cause problems if now is after midnight
-         # TODO ensure that the date of the TS is set to tomorrow, for next_day events
-         planned_update_event_day= now
+         # get the mode, based on category
+         # see http://www.atoc.org/clientfiles/File/RSPS5004%20v27.pdf page iv 
+	 	 mode_train_key='train'
+		 mode_bus_key='bus'
+         mode = mode_train_key
+         # include schedule category information in the response
+         #if schedule[:category][0] == 'B' 
+         if schedule[:obj].basic_schedule.category[0] == 'B'
+	         mode = mode_bus_key
+         end
+         #puts 'schedule[:obj].basic_schedule.category = '+schedule[:obj].basic_schedule.category
+         #puts 'mode = '+mode
+
          unless schedule[:obj].public_arrival.nil?
             planned_arrival_hhmm = schedule[:obj].public_arrival
-            planned_ds_arrival_day = planned_update_event_day
-            planned_ds_arrival_day +=1 if schedule[:obj]['next_day_arrival'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_ds_arrival_day = schedule[:runs_on]
             planned_arrival_ts = Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
          end
          unless schedule[:obj].public_departure.nil?
             planned_departure_hhmm = schedule[:obj].public_departure
-            planned_ds_departure_day = planned_update_event_day
-            planned_ds_departure_day +=1 if schedule[:obj]['next_day_departure'] =~ (/(true|t|yes|y|1)$/i)               
+            planned_ds_departure_day = schedule[:runs_on]
             planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
          end
-         
-         #puts "planned_arrival_ts: "+planned_arrival_ts.to_s
-         #puts "planned_departure_ts: "+planned_departure_ts.to_s
-         
+
          matching_station_update = nil
          # get matching movement updates, based on uuid, and tiploc
          live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
@@ -203,6 +258,7 @@ class LiveController < ApplicationController
          cancelled = false
 
          if live_movement_msgs.size() ==1
+            #puts 'we have a match for this departure'
             move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
             event_type = move_msg['event_type']
             variation_status = move_msg['variation_status']
@@ -210,35 +266,24 @@ class LiveController < ApplicationController
 
             #
             if timetable_variation_mins!= nil
-            
-#            "event_type":"DEPARTURE","gbtt_timestamp":"1353420000000","original_loc_stanox":"","planned_timestamp":"1353420000000","timetable_variation":"10","original_loc_timestamp":"","current_train_id":"","delay_monitoring_point":"true","next_report_run_time":"2","reporting_stanox":"88401","actual_timestamp":"1353420600000","correction_ind":"false","event_source":"AUTOMATIC","train_file_address":null,"platform":" 6","division_code":"80","train_terminated":"false","train_id":"882H42MO20","offroute_ind":"false","variation_status":"LATE",
-               
                diff_from_timetable_secs = 0         
                diff_from_timetable_secs = timetable_variation_mins*60  if move_msg['variation_status'] == 'LATE'
                predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
-               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?
-               
+               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?               
             end
-         #else
-         #   puts 'catch exceptions where there is no match'
          else
-#HARRY MOVED THIS DOWN HERE
             # get matching cancel updates, based on uuid, and tiploc
             live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
-        #NOPE NOT WORKING                cancelled = true 
             if live_cancellation_msgs.size() ==1
-               puts 'got a cancellation for '+bs_uuid.to_s
                cancelled = true
             end
          end
           
          # check the include conditions: is planned/predicted arrival/departure in past/future
-         # values can be t/f/nil
-         # TODO SUSPECT THIS IS CAUSE OF MIDNIGHT WRAPPING BUG. SUSPECT THE DATES ON planned_arrival_ts etc are set to today, and so 23:20 appears to be gt 00:12
-         planned_arrival_future = (Time.now < planned_arrival_ts) unless planned_arrival_ts.nil?
-         predicted_arrival_future = (Time.now < predicted_arrival_timestamp) unless predicted_arrival_timestamp.nil?
-         planned_departure_future = (Time.now < planned_departure_ts) unless planned_departure_ts.nil?
-         predicted_departure_future = (Time.now < predicted_departure_timestamp) unless predicted_departure_timestamp.nil?
+         planned_arrival_future = (now <= planned_arrival_ts) unless planned_arrival_ts.nil?
+         predicted_arrival_future = (now <= predicted_arrival_timestamp) unless predicted_arrival_timestamp.nil?
+         planned_departure_future = (now <= planned_departure_ts) unless planned_departure_ts.nil?
+         predicted_departure_future = (now <= predicted_departure_timestamp) unless predicted_departure_timestamp.nil?
 
          # whether to include this departure (default=false)
          include_dep = false
@@ -257,12 +302,12 @@ class LiveController < ApplicationController
             include_dep = false
          end
          
-         
          # for departures planned arrival is in future   AND/OR predicted 
          # 1. planned arrival is in future   AND/OR predicted 
          #include_dep = true
          if include_dep
             timetable_hash = {}
+            timetable_hash['mode'] = mode
             timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
             timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
             timetable_hash['platform'] = schedule[:obj].platform
