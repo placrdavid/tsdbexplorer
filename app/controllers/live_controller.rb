@@ -68,8 +68,15 @@ class LiveController < ApplicationController
       end
 
       # transform to json, and respond
-      output_json = performance_array.to_json
-      send_data output_json, :type => "text/plain", :disposition => 'inline'
+      #output_json = performance_array.to_json
+      #send_data output_json, :type => "text/plain", :disposition => 'inline'
+      
+      output_json = hash_to_json(performance_array, params['callback'] )
+      send_data output_json,
+            :type => "text/plain",
+            :disposition => 'inline' 
+
+
    end
    
    
@@ -170,6 +177,15 @@ class LiveController < ApplicationController
       # transform to json, and respond
       output_json = performance_array.to_json
       send_data output_json, :type => "text/plain", :disposition => 'inline'
+      
+      #output_json = performance_array.to_json
+      #send_data output_json, :type => "text/plain", :disposition => 'inline'
+      
+      output_json = hash_to_json(performance_array, params['callback'] )
+      send_data output_json,
+            :type => "text/plain",
+            :disposition => 'inline' 
+
    end
 
    # Return all known live updates for a station, in json format
