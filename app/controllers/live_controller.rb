@@ -191,6 +191,14 @@ class LiveController < ApplicationController
    # Return all known live updates for a station, in json format
    def stations_updates_json
 
+		# vehicle mode key and value names
+		# These MUST be synchronised with the Transport API config/initializers/transportapi.rb file
+		# VEHICLE_MODE_KEY_NAME, VEHICLE_MODE_BUS_VALUE, VEHICLE_MODE_TRAIN_VALUE
+		vehicle_mode_key_name = 'mode'
+		vehicle_mode_bus_value = 'bus'
+		vehicle_mode_train_value = 'train'
+
+
       # what to order by? planned_departure by default. Must be one planned/predicted_planned_departure/arrival
       order_by = 'planned_departure_timestamp'
       order_options = ['planned_arrival_timestamp', 'predicted_arrival_timestamp', 'planned_departure_timestamp', 'predicted_departure_timestamp']
@@ -200,23 +208,26 @@ class LiveController < ApplicationController
 
       # Get incoming tiplocs: a comma separated string
       tiplocs_string = params[:tiploc].upcase
-      tiplocs_orig_array = tiplocs_string.split(',')
-      
+      tiplocs_orig_array = tiplocs_string.split(',')      
       tiplocs_final_array = tiplocs_orig_array
 
+	  # get our locations, ordered as requested
       if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
          @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
       else
          @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure)
       end      
 
-      # Only display passenger schedules in normal mode
+      # get the timerange, based on now
       now = DateTime.now
-      debug  =false
+=begin      
+	  # a useful snippet for altering 'now' for debug, e.g. for the midnight wrapping bug
+	  debug  =false
 	  if debug
       	now = DateTime.now.midnight
       	now = now + 10.minutes
   	  end
+=end
       before_range = 1.hour
       after_range = 2.hour
       @range = Hash.new
@@ -224,38 +235,27 @@ class LiveController < ApplicationController
       @range[:to] = now + after_range
       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
 
-      timetables_array=[] 
 
-      # get timetables
+      # get timetables from schedules
+      timetables_array=[] 
       @schedule.each do |schedule|
 
-         # get the origin / destination - speed this up
-         #puts '============================================'
-         #p schedule
-
+		# get the id, and origin/destin
          bs_uuid = schedule[:obj].basic_schedule_uuid
-
          origin_name = 'nil'
          destin_name = 'nil' 
-
          origin_name = schedule[:obj].basic_schedule.origin_name
          destin_name = schedule[:obj].basic_schedule.destin_name
-
          train_uid = schedule[:obj].basic_schedule.train_uid
          
-         # get the mode, based on category
-         # see http://www.atoc.org/clientfiles/File/RSPS5004%20v27.pdf page iv 
-	 	 mode_train_key='train'
-		 mode_bus_key='bus'
-         mode = mode_train_key
-         # include schedule category information in the response
-         #if schedule[:category][0] == 'B' 
+         # get the mode, based on category: see http://www.atoc.org/clientfiles/File/RSPS5004%20v27.pdf page iv 
+         # note that vehicle_mode_train_value must be synched with TAPI config/initializers/transportapi.rb file
+         mode = vehicle_mode_train_value
          if schedule[:obj].basic_schedule.category[0] == 'B'
-	         mode = mode_bus_key
+	         mode = vehicle_mode_bus_value
          end
-         #puts 'schedule[:obj].basic_schedule.category = '+schedule[:obj].basic_schedule.category
-         #puts 'mode = '+mode
 
+		 # create a datetime from a date and a time, for arr and dep
          unless schedule[:obj].public_arrival.nil?
             planned_arrival_hhmm = schedule[:obj].public_arrival
             planned_ds_arrival_day = schedule[:runs_on]
@@ -268,21 +268,23 @@ class LiveController < ApplicationController
          end
 
          matching_station_update = nil
+
          # get matching movement updates, based on uuid, and tiploc
          live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
 
+		 # flags if train is cancelled
          cancelled = false
 
          if live_movement_msgs.size() ==1
-            #puts 'we have a match for this departure'
             move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
             event_type = move_msg['event_type']
             variation_status = move_msg['variation_status']
             timetable_variation_mins = move_msg['timetable_variation'].to_i
 
-            #
+            # get variation from timetable
             if timetable_variation_mins!= nil
                diff_from_timetable_secs = 0         
+               # note we only adjust for late trains. early trains will just be on time!
                diff_from_timetable_secs = timetable_variation_mins*60  if move_msg['variation_status'] == 'LATE'
                predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
                predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?               
@@ -303,7 +305,8 @@ class LiveController < ApplicationController
 
          # whether to include this departure (default=false)
          include_dep = false
-         # hierarchy of checks of whether or not to include, set by first of 
+         # We only want to include future events
+         # Hierarchy of checks of whether or not to include, set by first of 
          #   predicted departure, predicted arrival, planned departure, planned arrival
          # that is not null
          if predicted_departure_future != nil
@@ -318,12 +321,11 @@ class LiveController < ApplicationController
             include_dep = false
          end
          
-         # for departures planned arrival is in future   AND/OR predicted 
-         # 1. planned arrival is in future   AND/OR predicted 
-         #include_dep = true
+         # for arrs/deps that are in the future, construct and add a hash
          if include_dep
             timetable_hash = {}
-            timetable_hash['mode'] = mode
+
+            timetable_hash[vehicle_mode_key_name] = mode
             timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
             timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
             timetable_hash['platform'] = schedule[:obj].platform
