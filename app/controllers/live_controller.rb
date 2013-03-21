@@ -175,8 +175,8 @@ class LiveController < ApplicationController
       end
 =end
       # transform to json, and respond
-      output_json = performance_array.to_json
-      send_data output_json, :type => "text/plain", :disposition => 'inline'
+      #output_json = performance_array.to_json
+      #send_data output_json, :type => "text/plain", :disposition => 'inline'
       
       #output_json = performance_array.to_json
       #send_data output_json, :type => "text/plain", :disposition => 'inline'
