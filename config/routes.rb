@@ -64,6 +64,8 @@ Tsdbexplorer::Application.routes.draw do
 
   match '/live/london_performance', :controller => 'live', :action => 'london_performance_json'
   match '/live/newcastle_performance', :controller => 'live', :action => 'newcastle_performance_json'
+  match '/live/station_performance', :controller => 'live', :action => 'station_performance_json'
+
 
   match ':controller(/:action(/:id(.:format)))'
 

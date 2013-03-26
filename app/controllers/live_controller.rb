@@ -25,6 +25,40 @@ class LiveController < ApplicationController
       send_data output_json, :type => "text/plain", :disposition => 'inline'
    end
 
+
+
+   # returns performance stats for specified array of stations
+   def station_performance_json
+
+      performance_array = []
+
+      crs_array = ["MAS", "NCL","DOT" ,"MCE" ,"HEW" ,"BLO" ,"APN" ,"BNR" ,"CRM" ,"WYM" ,"EBL" ,"CLS" ,"SEB" ,"PRU" ,"STZ" ,"SUN" ,"MPT" ,"DHM" ,"PEG" ]
+#      tiplocs_array = ['MANORS','NWCSTLE','DNSN','GTSHDMC','HEWORTH','BLAYDON','AIRP','BRWHINS','CRMLNGT','WYLAM','EBOLDON','CLST','SEABURN','PRUDHOE','SNDRMNK','SNDRLND','MRPTHRP','DRHM','PEGSWD']
+
+=begin
+      crs_tiplocs.each do |crs|
+         crs = TrainCrs.find_by_crs(crs)
+         p crs
+         # get tiplocs for this CRS
+         tiplocs = nil
+         #puts 'getting stats for crs '+crs+' tiplocs '+tiplocs
+         performance_hash = Performance.get_station_performance(tiplocs, 'departures')
+#         p performance_hash
+         avg_secs_late = performance_hash[:avg_secs_late]
+         sample_size = performance_hash[:n_live_deps]
+         station_hash = {:crs => crs, :tiplocs => tiplocs, :avg_secs_late => avg_secs_late, :sample_size => sample_size}
+         performance_array.push(station_hash)
+      end
+=end
+      # transform to json, and respond
+      output_json = hash_to_json(performance_array, params['callback'] )
+      send_data output_json,
+            :type => "text/plain",
+            :disposition => 'inline' 
+
+
+   end
+   
    # a shortterm shortcut to just get performance for a small number of stations
    def newcastle_performance_json
 
@@ -60,7 +94,7 @@ class LiveController < ApplicationController
       # get lat, lon, name
          #puts 'getting stats for crs '+crs+' tiplocs '+station_info[:tiplocs]
          performance_hash = Performance.get_station_performance(station_info[:tiplocs], 'departures')
-         p performance_hash
+#         p performance_hash
          avg_secs_late = performance_hash[:avg_secs_late]
          sample_size = performance_hash[:n_live_deps]
          station_hash = {:crs => crs, :lon => station_info[:lon], :lat => station_info[:lat], :name => station_info[:name], :avg_secs_late => avg_secs_late, :sample_size => sample_size}
@@ -152,7 +186,7 @@ class LiveController < ApplicationController
       # get lat, lon, name
          #puts 'getting stats for crs '+crs+' tiplocs '+station_info[:tiplocs]
          performance_hash = Performance.get_station_performance(station_info[:tiplocs], 'departures')
-         p performance_hash
+#         p performance_hash
          avg_secs_late = performance_hash[:avg_secs_late]
          sample_size = performance_hash[:n_live_deps]
          station_hash = {:crs => crs, :lon => station_info[:lon], :lat => station_info[:lat], :name => station_info[:name], :avg_secs_late => avg_secs_late, :sample_size => sample_size}
