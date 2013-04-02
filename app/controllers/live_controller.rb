@@ -5,12 +5,7 @@
 ###########################################################
 
 require 'json'
-#require Rails.root + "lib/performance.rb" # works
-#require "lib/performance.rb" # death
-#require "performance.rb" # works
 require "performance" # works
-#require "Performance"#megadeath
-#include "Performance"# death
 
 class LiveController < ApplicationController
    
@@ -295,6 +290,11 @@ class LiveController < ApplicationController
       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
 
 
+#      puts 'now = '+now.to_s
+#      puts 'from  = '+(now -before_range).to_s
+#      puts 'to = '+(now+after_range).to_s
+
+
       # get timetables from schedules
       timetables_array=[] 
       @schedule.each do |schedule|
@@ -314,16 +314,29 @@ class LiveController < ApplicationController
 	         mode = vehicle_mode_bus_value
          end
 
-		 # create a datetime from a date and a time, for arr and dep
+	
+	 # create a datetime from a date and a time, for arr and dep
          unless schedule[:obj].public_arrival.nil?
             planned_arrival_hhmm = schedule[:obj].public_arrival
+#            puts 'planned arrival hhmm = '+ planned_arrival_hhmm.to_s
             planned_ds_arrival_day = schedule[:runs_on]
             planned_arrival_ts = Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
+#            puts 'planned arrival ts = '+planned_arrival_ts.to_s
+            planned_arrival_ts = now
+#            puts 'planned arrival ts = '+planned_arrival_ts.to_s
+            planned_arrival_ts = planned_arrival_ts.change({:year => planned_ds_arrival_day.year,:month => planned_ds_arrival_day.month,:date => planned_ds_arrival_day.day,:hour => planned_arrival_hhmm[0,2].to_i, :min => planned_arrival_hhmm[2,2].to_i,:sec => 0})
+#Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
+#            puts 'temp = '+temp.to_s
+#            puts 'planned arrival ts = '+planned_arrival_ts.to_s
+
          end
          unless schedule[:obj].public_departure.nil?
             planned_departure_hhmm = schedule[:obj].public_departure
             planned_ds_departure_day = schedule[:runs_on]
-            planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
+#            planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
+            planned_departure_ts = now
+            planned_departure_ts = planned_departure_ts.change({:year => planned_ds_departure_day.year,:month => planned_ds_departure_day.month,:date => planned_ds_departure_day.day,:hour => planned_departure_hhmm[0,2].to_i, :min => planned_departure_hhmm[2,2].to_i,:sec => 0})
+#            puts 'planned departure hhmm = '+ planned_departure_hhmm.to_s
          end
 
          matching_station_update = nil
