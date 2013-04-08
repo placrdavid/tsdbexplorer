@@ -289,12 +289,6 @@ class LiveController < ApplicationController
       @range[:to] = now + after_range
       @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
 
-
-#      puts 'now = '+now.to_s
-#      puts 'from  = '+(now -before_range).to_s
-#      puts 'to = '+(now+after_range).to_s
-
-
       # get timetables from schedules
       timetables_array=[] 
       @schedule.each do |schedule|
@@ -314,29 +308,18 @@ class LiveController < ApplicationController
 	         mode = vehicle_mode_bus_value
          end
 
-	
-	 # create a datetime from a date and a time, for arr and dep
+	     # create a datetime from a date and a time, for arr and dep
          unless schedule[:obj].public_arrival.nil?
             planned_arrival_hhmm = schedule[:obj].public_arrival
-#            puts 'planned arrival hhmm = '+ planned_arrival_hhmm.to_s
             planned_ds_arrival_day = schedule[:runs_on]
-            planned_arrival_ts = Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
-#            puts 'planned arrival ts = '+planned_arrival_ts.to_s
             planned_arrival_ts = now
-#            puts 'planned arrival ts = '+planned_arrival_ts.to_s
             planned_arrival_ts = planned_arrival_ts.change({:year => planned_ds_arrival_day.year,:month => planned_ds_arrival_day.month,:date => planned_ds_arrival_day.day,:hour => planned_arrival_hhmm[0,2].to_i, :min => planned_arrival_hhmm[2,2].to_i,:sec => 0})
-#Time.utc(planned_ds_arrival_day.year,planned_ds_arrival_day.month,planned_ds_arrival_day.day,planned_arrival_hhmm[0,2].to_i,  planned_arrival_hhmm[2,2].to_i)               
-#            puts 'temp = '+temp.to_s
-#            puts 'planned arrival ts = '+planned_arrival_ts.to_s
-
          end
          unless schedule[:obj].public_departure.nil?
             planned_departure_hhmm = schedule[:obj].public_departure
             planned_ds_departure_day = schedule[:runs_on]
-#            planned_departure_ts = Time.utc(planned_ds_departure_day.year,planned_ds_departure_day.month,planned_ds_departure_day.day,planned_departure_hhmm[0,2].to_i,  planned_departure_hhmm[2,2].to_i)               
             planned_departure_ts = now
             planned_departure_ts = planned_departure_ts.change({:year => planned_ds_departure_day.year,:month => planned_ds_departure_day.month,:date => planned_ds_departure_day.day,:hour => planned_departure_hhmm[0,2].to_i, :min => planned_departure_hhmm[2,2].to_i,:sec => 0})
-#            puts 'planned departure hhmm = '+ planned_departure_hhmm.to_s
          end
 
          matching_station_update = nil
@@ -358,8 +341,10 @@ class LiveController < ApplicationController
                diff_from_timetable_secs = 0         
                # note we only adjust for late trains. early trains will just be on time!
                diff_from_timetable_secs = timetable_variation_mins*60  if move_msg['variation_status'] == 'LATE'
-               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
-               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?               
+#               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
+#               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?               
+               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs.seconds) unless planned_departure_ts.nil?
+               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs.seconds) unless planned_arrival_ts.nil?               
             end
          else
             # get matching cancel updates, based on uuid, and tiploc
@@ -392,6 +377,7 @@ class LiveController < ApplicationController
          else 
             include_dep = false
          end
+         
          
          # for arrs/deps that are in the future, construct and add a hash
          if include_dep
@@ -428,8 +414,9 @@ class LiveController < ApplicationController
             timetable_hash['service_name'] = nil
             timetable_hash['service_name'] = schedule[:obj].basic_schedule.service_code unless schedule[:obj].basic_schedule.nil?
             timetable_hash['operator_ref'] = schedule[:obj].basic_schedule.atoc_code unless schedule[:obj].basic_schedule.nil?
-            timetables_array << timetable_hash        
+            timetables_array << timetable_hash       
          end
+         
       end
 
 

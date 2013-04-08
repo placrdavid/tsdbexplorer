@@ -93,6 +93,8 @@ class Location < ActiveRecord::Base
 
   def self.runs_between(from, to, show_passing)
 
+	puts 'from = '+from.to_s
+	puts 'to = '+to.to_s
     queries = Hash.new
 
     trains = Array.new
