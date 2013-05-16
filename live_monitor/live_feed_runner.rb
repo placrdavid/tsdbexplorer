@@ -8,6 +8,7 @@
 # Run on a cron job, every n minute(s)
 
 require 'yaml'
+gem 'pg', '= 0.13.2'
 require "pg"
 require 'time'
 
@@ -256,7 +257,7 @@ restart_script = false
 # if (1) script running, but updates stale, or (2) we are running multiple versions, kill script(s), and restart
 if (latest_update_stale && script_running) || PID_array.count>=2
    PID_array.each do |pid|
-      kill_pid_cmd = 'kill '+pid.to_s
+      kill_pid_cmd = 'kill -9 '+pid.to_s
       `#{kill_pid_cmd}`
    end
    puts Time.now.to_s+': script must be shut down and restarted: script_running = '+script_running.to_s+

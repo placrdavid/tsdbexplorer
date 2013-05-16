@@ -274,14 +274,17 @@ class LiveController < ApplicationController
 
       # get the timerange, based on now
       now = DateTime.now
-=begin      
+
 	  # a useful snippet for altering 'now' for debug, e.g. for the midnight wrapping bug
 	  debug  =false
 	  if debug
       	now = DateTime.now.midnight
-      	now = now + 10.minutes
+#      	now = now + 10.minutes
+      	now = now + 31.days
+      	now = now + 10.hour
+      	now = now + 45.minute
+      	puts 'setting the date to future'
   	  end
-=end
       before_range = 1.hour
       after_range = 2.hour
       @range = Hash.new

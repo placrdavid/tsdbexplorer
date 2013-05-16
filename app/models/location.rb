@@ -58,7 +58,6 @@ class Location < ActiveRecord::Base
 
 
   # Pick the most appropriate schedule - Permanent, Overlay, STP, Cancellation
-
   scope :appropriate_stp_indicator, lambda { |date|
     where('stp_indicator IN (SELECT MIN(stp_indicator) FROM basic_schedules AS bs2 WHERE train_uid = basic_schedules.train_uid AND ? BETWEEN runs_from AND runs_to)', date)
   }
@@ -111,7 +110,6 @@ class Location < ActiveRecord::Base
       run_date = from.midnight
 
       # Return all schedules which run today and call on this day within the window
-
       q1 = schedule_base.runs_on(from.to_s(:yyyymmdd)).where('locations.next_day_departure = false OR locations.next_day_arrival = false').includes(:basic_schedule)
 
       if show_passing == true

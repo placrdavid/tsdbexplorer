@@ -3,7 +3,7 @@
 
 (    
     #make sure we don't get dupes!
-    flock -n 9 || exit 1
+    if ! flock -n 9; then exit 1; fi
 
     # source the .profile file, which adds rbenv paths to PATH, allowing cron to run ruby files
     source /root/.profile
@@ -39,9 +39,10 @@
     # define rails_env and verbosity values in settings.txt
     export RAILS_ENV=$rails_env_value
     export VERBOSITY=$verbosity_value
-    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+    DIR="$( cd .. && pwd )"
 
     printf "about to run script\n"
+    echo live_feed_runner.rb $RAILS_ENV $VERBOSITY $DIR
 
     echo $PATH
     rbenv versions

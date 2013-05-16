@@ -12,6 +12,7 @@ require 'eventmachine'
 require 'json'
 
 require 'yaml'
+gem 'pg', '= 0.13.2'
 require "pg"
 require "date"
 
@@ -552,6 +553,7 @@ module Poller
                
                   # store the current msg for debug diagnostics
                   @current_msg = indiv_msg
+                  # puts indiv_msg
                   toc_id = indiv_msg['body']['toc_id']     
                   
                      msg_type = indiv_msg['header']['msg_type']
@@ -672,7 +674,7 @@ module Poller
             # email notice about exception
             emailcontent = 'live feed parser ruby script failed with message' + e.message.to_s
             emailheader = 'live feed parser ruby script failed'
-            `#echo #{emailcontent} | mutt -s #{emailheader} #{@error_msg_recipient_email}`
+            # `#echo #{emailcontent} | mutt -s #{emailheader} #{@error_msg_recipient_email}`
          end # begin / rescue Exception
       end # if / else msg.command == "CONNECTED"
       
