@@ -100,8 +100,8 @@ class Location < ActiveRecord::Base
 
     schedule_base = Location
 
+    
     if from.midnight == to.midnight
-
       # The time window doesn't span midnight, so retrieve the following schedules:
       #
       #   - Runs today and calls within the time window
@@ -111,6 +111,8 @@ class Location < ActiveRecord::Base
 
       # Return all schedules which run today and call on this day within the window
       q1 = schedule_base.runs_on(from.to_s(:yyyymmdd)).where('locations.next_day_departure = false OR locations.next_day_arrival = false').includes(:basic_schedule)
+      #puts 'q1'
+      #p q1
 
       if show_passing == true
         q1 = q1.passes_between(from.to_s(:hhmm), to.to_s(:hhmm))
@@ -126,6 +128,8 @@ class Location < ActiveRecord::Base
       # Return all schedules which ran yesterday and call on the next day within the window (i.e. over midnight)
 
       q2 = schedule_base.runs_on((from - 1.day).to_s(:yyyymmdd)).where('locations.next_day_departure = true OR locations.next_day_arrival = true').includes(:basic_schedule)
+      #puts 'q2'
+      #p q2
 
       if show_passing == true
         q2 = q2.passes_between(from.to_s(:hhmm), to.to_s(:hhmm))
@@ -138,7 +142,7 @@ class Location < ActiveRecord::Base
       end
 
     else
-
+      puts 'from.midnight != to.midnight'
       # The time window spans midnight, so retrieve the following schedules:
       #
       #  - Runs on the day before midnight and calls up until midnight
@@ -147,10 +151,13 @@ class Location < ActiveRecord::Base
 
       day_before_midnight = from.midnight
       day_after_midnight = to.midnight
-
+      puts 'day_before_midnight '+day_before_midnight.to_s
+      puts 'day_after_midnight '+day_after_midnight.to_s
       # Return all schedules which run on the day before midnight and call up until midnight
 
       q1 = schedule_base.runs_on(day_before_midnight.to_s(:yyyymmdd)).where('locations.next_day_departure = false OR locations.next_day_arrival = false').includes(:basic_schedule)
+      #puts 'q1'
+      #p q1
 
       if show_passing == true
         q1 = q1.passes_between(from.to_s(:hhmm), "2359H")
@@ -166,6 +173,8 @@ class Location < ActiveRecord::Base
       # Return all schedules which run on the day before midnight and call after midnight
 
       q2 = schedule_base.runs_on(day_before_midnight.to_s(:yyyymmdd)).where('locations.next_day_departure = true OR locations.next_day_arrival = true').includes(:basic_schedule)
+      #puts 'q2'
+      #p q2
 
       if show_passing == true
         q2 = q2.passes_between('0000', to.to_s(:hhmm))
@@ -181,6 +190,8 @@ class Location < ActiveRecord::Base
       # Return all schedules which run on the day after midnight and call between midnight and the end of the time window
 
       q3 = schedule_base.runs_on(to.to_s(:yyyymmdd)).where('locations.next_day_departure = false AND locations.next_day_arrival = false').includes(:basic_schedule)
+      #puts 'q3'
+      #p q3
 
       if show_passing == true
         q3 = q3.passes_between('0000', to.to_s(:hhmm))

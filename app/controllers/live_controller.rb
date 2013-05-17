@@ -279,11 +279,20 @@ class LiveController < ApplicationController
 	  debug  =false
 	  if debug
       	now = DateTime.now.midnight
-#      	now = now + 10.minutes
-      	now = now + 31.days
-      	now = now + 10.hour
-      	now = now + 45.minute
-      	puts 'setting the date to future'
+      	
+#      	now = now - 61.minutes # ok
+#      	now = now - 59.minutes # ok
+#      	now = now - 10.minutes # ok
+#      	now = now - 1.minutes # ok
+#      	now = now + 1.minutes # ok
+#      	now = now + 50.minutes #  ok
+#      	now = now + 61.minutes # bug!
+#      	now = now + 91.minutes # ok
+
+#      	now = now + 31.days
+#      	now = now + 10.hour
+#      	now = now + 45.minute
+#      	puts 'setting the date to future'
   	  end
       before_range = 1.hour
       after_range = 2.hour
@@ -295,7 +304,7 @@ class LiveController < ApplicationController
       # get timetables from schedules
       timetables_array=[] 
       @schedule.each do |schedule|
-
+      p schedule
 		# get the id, and origin/destin
          bs_uuid = schedule[:obj].basic_schedule_uuid
          origin_name = 'nil'
@@ -315,14 +324,26 @@ class LiveController < ApplicationController
          unless schedule[:obj].public_arrival.nil?
             planned_arrival_hhmm = schedule[:obj].public_arrival
             planned_ds_arrival_day = schedule[:runs_on]
+			if schedule[:obj].next_day_arrival == true # add an extra day, if its a next day arrival
+				planned_ds_arrival_day = planned_ds_arrival_day+1.day 
+			end		
             planned_arrival_ts = now
-            planned_arrival_ts = planned_arrival_ts.change({:year => planned_ds_arrival_day.year,:month => planned_ds_arrival_day.month,:date => planned_ds_arrival_day.day,:hour => planned_arrival_hhmm[0,2].to_i, :min => planned_arrival_hhmm[2,2].to_i,:sec => 0})
+            planned_arrival_ts = planned_arrival_ts.change({:year => planned_ds_arrival_day.year,:month => planned_ds_arrival_day.month,:day => planned_ds_arrival_day.day,:hour => planned_arrival_hhmm[0,2].to_i, :min => planned_arrival_hhmm[2,2].to_i,:sec => 0})
          end
          unless schedule[:obj].public_departure.nil?
             planned_departure_hhmm = schedule[:obj].public_departure
             planned_ds_departure_day = schedule[:runs_on]
+            if schedule[:obj].next_day_departure == true         # add an extra day, if its a next day arrival
+	            planned_ds_departure_day = planned_ds_departure_day+1.day  
+	        end
+	        # a bug is still observed here for when    
+	        # now = now + 61.minutes # bug!
+# for the URL http://placraa3.miniserver.com:3000/live/station/CLPHMJC
+# http://4.placr.co.uk/v3/uk/train/station/CLJ/live
+# 00:07	London Victoria	no report	14 is observed
+# {:a=>Wed, 11 Jun 2014 00:00:00 +0100, :p=>nil, :d=>Sun, 10 Aug 2014 00:00:00 +0100, :runs_on=>Fri, 17 May 2013 00:00:00 +0100, :obj=>#<Location id: 8198022, basic_schedule_uuid: "db049eb0-9e0e-0130-093d-10b11c15c7ff", location_type: "LI", tiploc_code: "CLPHMJC", tiploc_instance: nil, arrival: "0006H", public_arrival: "0007", pass: nil, departure: "0007H", public_departure: "0007", platform: "14", line: "SL", path: nil, engineering_allowance: nil, pathing_allowance: nil, performance_allowance: nil, created_at: "2013-05-13 15:22:42", updated_at: "2013-05-13 15:22:42", seq: 160, activity_ae: false, activity_bl: false, activity_minusd: false, activity_hh: false, activity_kc: false, activity_ke: false, activity_kf: false, activity_ks: false, activity_op: false, activity_or: false, activity_pr: false, activity_rm: false, activity_rr: false, activity_minust: false, activity_tb: false, activity_tf: false, activity_ts: false, activity_tw: false, activity_minusu: false, activity_a: false, activity_c: false, activity_d: false, activity_e: false, activity_g: false, activity_h: false, activity_k: false, activity_l: false, activity_n: false, activity_r: false, activity_s: false, activity_t: true, activity_u: false, activity_w: false, activity_x: false, next_day_arrival: false, next_day_departure: true, arrival_secs: 390, departure_secs: 450, pass_secs: nil, public_arrival_secs: 420, public_departure_secs: 420>}
             planned_departure_ts = now
-            planned_departure_ts = planned_departure_ts.change({:year => planned_ds_departure_day.year,:month => planned_ds_departure_day.month,:date => planned_ds_departure_day.day,:hour => planned_departure_hhmm[0,2].to_i, :min => planned_departure_hhmm[2,2].to_i,:sec => 0})
+            planned_departure_ts = planned_departure_ts.change({:year => planned_ds_departure_day.year,:month => planned_ds_departure_day.month,:day => planned_ds_departure_day.day,:hour => planned_departure_hhmm[0,2].to_i, :min => planned_departure_hhmm[2,2].to_i,:sec => 0})
          end
 
          matching_station_update = nil
