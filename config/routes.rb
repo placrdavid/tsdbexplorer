@@ -31,6 +31,9 @@ Tsdbexplorer::Application.routes.draw do
 
   match '/healthcheck', :controller => 'healthcheck', :action => 'index'
 
+#  match '/quality/rate_of_missing_tiplocs', :controller => 'quality', :action => 'rate_of_missing_tiplocs'
+
+
   match '/location/search', :controller => 'location', :action => 'search'
   match '/location/advanced_search', :controller => 'location', :action => 'advanced_search'
 
