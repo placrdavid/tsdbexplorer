@@ -55,3 +55,17 @@ TFL_TRACKER:
 
    # whether or not we archive train movements to a dedicated table - will impact performance
    log_movements: true
+
+COMPLETENESS_TESTS_EXPECTED_VALUES:
+    expected_n_tiplocs: 10713
+    expected_n_locations: 4447935
+    expected_n_basic_schedules: 307882
+
+ACCEPTABLE_QUALITY_METRIC_VALUES:
+    # Acceptable metric values for each metric
+    rate_of_missing_tiplocs: 0.05
+    rate_of_missing_locations: 0.05
+    rate_of_missing_basic_schedules: 0.05
+    rate_of_excess_tiplocs: 0.05
+    rate_of_excess_locations: 0.05
+    rate_of_excess_basic_schedules: 0.05
