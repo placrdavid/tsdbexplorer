@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Runs the live feed parser
 
 (    
