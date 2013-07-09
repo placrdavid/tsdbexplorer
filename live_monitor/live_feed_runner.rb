@@ -260,8 +260,14 @@ if (latest_update_stale && script_running) || PID_array.count>=2
       kill_pid_cmd = 'kill -9 '+pid.to_s
       `#{kill_pid_cmd}`
    end
-   puts Time.now.to_s+': script must be shut down and restarted: script_running = '+script_running.to_s+
-   ' and latest_update_stale = '+latest_update_stale.to_s+' ('+secs_since_last_update.to_s+' secs since last update)' unless @quiet
+   if last_update_t.nil?
+      puts Time.now.to_s+': script must be shut down and restarted: script_running = '+script_running.to_s+
+      ' and latest_update_stale = '+latest_update_stale.to_s+' (last_update_t is nil -> no updates in DB?!?)' unless @quiet
+   else
+      puts Time.now.to_s+': script must be shut down and restarted: script_running = '+script_running.to_s+
+      ' and latest_update_stale = '+latest_update_stale.to_s+' ('+secs_since_last_update.to_s+' secs since last update)' unless @quiet
+   end
+
    restart_script = true
 end
 
