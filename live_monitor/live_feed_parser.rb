@@ -16,6 +16,8 @@ gem 'pg', '= 0.13.2'
 require "pg"
 require "date"
 
+require 'csv'
+
 #require 'redis'
 
 STDOUT.sync = true 
@@ -43,6 +45,30 @@ STDOUT.sync = true
 @timelastmsg
 
 #@redis
+
+# --- STATS LOGGING ----
+
+# msg stats: temporal resolution
+@stats_temporal_resolution_secs
+
+# msg stats: time of last report
+@stats_last_report
+
+# msg stats: tracked / not
+@tracked_trains_stats_logfile
+@stats_n_tracked_trains
+@stats_n_untracked_trains
+
+# msg stats: type of msg
+@msgtype_stats_logfile
+@stats_n_0001_msgs
+@stats_n_0002_msgs
+@stats_n_0003_msgs
+@stats_n_0004_msgs
+@stats_n_0005_msgs
+@stats_n_0006_msgs
+@stats_n_0007_msgs
+@stats_n_0008_msgs
 
 
 # open the DB connection
@@ -469,6 +495,37 @@ def process_trainchangeoflocation_msg(indiv_msg, tracked_train)
 
 end
 
+#  log the current stats
+def log_stats(elapsed_t_since_statslog)
+
+  # append csv file for tracked vs untracked trains stats
+  # timestamp,target_temporal_resolution,actual_temporal_resolution,n_tracked,n_untracked,n_total
+  CSV.open(@tracked_trains_stats_logfile, "ab") do |csv|
+    csv << [Time.now, @stats_temporal_resolution_secs , elapsed_t_since_statslog, @stats_n_tracked_trains, @stats_n_untracked_trains, ( @stats_n_tracked_trains + @stats_n_untracked_trains)]
+  end
+
+  # append csv file for types of msgs stats  
+  # timestamp,target_temporal_resolution,actual_temporal_resolution,n_0001,n_0002,n_0003,n_0004,n_0005,n_0006,n_0007,n_0008,n_0009,n_total  
+  stats_n_msgs = @stats_n_0001_msgs+@stats_n_0002_msgs+@stats_n_0003_msgs+@stats_n_0004_msgs+@stats_n_0005_msgs+@stats_n_0006_msgs+@stats_n_0007_msgs+@stats_n_0008_msgs
+  CSV.open(@msgtype_stats_logfile, "ab") do |csv|
+    csv << [Time.now, @stats_temporal_resolution_secs , elapsed_t_since_statslog, @stats_n_0001_msgs,
+    @stats_n_0002_msgs, @stats_n_0003_msgs, @stats_n_0004_msgs, @stats_n_0005_msgs, @stats_n_0006_msgs, 
+    @stats_n_0007_msgs, @stats_n_0008_msgs, stats_n_msgs]
+  end
+  
+  # reset the counters
+  reset_stats_counters()
+
+  # reset time interval
+  @stats_last_report = Time.now
+
+end
+# reset all our stats counters to zero
+def reset_stats_counters
+  @stats_n_tracked_trains =  @stats_n_untracked_trains = @stats_n_0001_msgs = @stats_n_0002_msgs = @stats_n_0003_msgs = @stats_n_0004_msgs = @stats_n_0005_msgs = @stats_n_0006_msgs = @stats_n_0007_msgs = @stats_n_0008_msgs = 0
+end
+
+
 # a dummy method - can we keep up, when we do no processing at all, but wait for 60 secs
 #def sleep60()
 #   sleep(60)
@@ -496,6 +553,30 @@ module Poller
       subscribed_feeds_string = ARGV[11] 
       @subscribed_feeds = subscribed_feeds_string.split(',')
       
+      # set the logging interval 
+      @stats_temporal_resolution_secs = 60*5
+      @stats_last_report = Time.now
+      reset_stats_counters()
+      
+      # do our stats logfiles exist?
+      # TODO SET filename FROM BASH settings file?      
+      @tracked_trains_stats_logfile = 'tracked_trains_stats_logfile.csv'
+      @msgtype_stats_logfile = 'msgtype_stats_logfile.csv'
+
+      # create the tracked trains stats logfile, if doesn't exist - append with header
+      unless File.exist?(@tracked_trains_stats_logfile) 
+        CSV.open(@tracked_trains_stats_logfile, "ab") do |csv|
+		  csv << ['timestamp','target_temporal_resolution','actual_temporal_resolution','n_tracked','n_untracked','n_total']
+  	    end
+      end  
+      # create the msg type stats logfile, if doesn't exist - append with header
+      unless File.exist?(@msgtype_stats_logfile) 
+        CSV.open(@msgtype_stats_logfile, "ab") do |csv|
+		  csv << ['timestamp','target_temporal_resolution','actual_temporal_resolution','n_0001','n_0002','n_0003','n_0004','n_0005','n_0006','n_0007','n_0008','n_0009','n_total' ]
+  	    end
+      end  
+      
+
       @log_movements = false
       @log_movements = true if (ARGV[12].casecmp("true") == 0) || (ARGV[12].casecmp("t") == 0) || (ARGV[12].casecmp("1") == 0)
       puts '@log_movements = '+@log_movements.to_s
@@ -551,6 +632,10 @@ module Poller
 
                msg_list.each do |indiv_msg|
                
+                  elapsed_t_since_statslog = Time.now - @stats_last_report
+                  # if it is time to log these stats
+                  log_stats(elapsed_t_since_statslog) if (elapsed_t_since_statslog) > @stats_temporal_resolution_secs 
+                                   
                   # store the current msg for debug diagnostics
                   @current_msg = indiv_msg
                   # puts indiv_msg
@@ -568,11 +653,21 @@ module Poller
                      if matching_trackedtrains_res.count.to_i==1
                         tracked_train = matching_trackedtrains_res[0]
                         puts Time.now.to_s+': '+train_id.to_s+' is tracked' unless @quiet                        
+						@stats_n_tracked_trains +=1
+					else
+						@stats_n_untracked_trains+=1
                      end
+                     
+                     # log this msg
+                     
+                     # log whether we are tracking this train
+                     
                      
 
                      # Message 1 – 0001 – Activation Message
-                     if msg_type == '0001'                     
+                     if msg_type == '0001'     
+                       @stats_n_0001_msgs+=1
+
 #                       puts Time.now.to_s+' (thread=)'+Thread.current.to_s+': 0001 msg for train_id '+train_id+''  
 #                        # if we are not already tracking this train, insert into tracking table, else report an error
                         if matching_trackedtrains_res.count.to_i == 0
@@ -587,6 +682,8 @@ module Poller
 
                      # Message 2 – 0002 – Cancellation
                      if msg_type == '0002'
+                        @stats_n_0002_msgs+=1
+
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                            p indiv_msg
@@ -597,6 +694,7 @@ module Poller
                      end
                      # Message 3 – 0003 – Train Movement
                      if msg_type == '0003'
+                        @stats_n_0003_msgs+=1
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"     unless @quiet                    
                            if train_id[0] == '2'
@@ -613,6 +711,7 @@ module Poller
                      end
                      # Message 4 – 0004 – Unidentified Train
                      if msg_type == '0004'
+                        @stats_n_0004_msgs+=1
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"        unless @quiet                 
                            p indiv_msg
@@ -622,7 +721,8 @@ module Poller
                         end                    
                      end
                      # Message 5 – 0005 – Train Reinstatement
-                     if msg_type == '0005'                     
+                     if msg_type == '0005'          
+                        @stats_n_0005_msgs+=1
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                            p indiv_msg
@@ -633,6 +733,7 @@ module Poller
                      end
                      # Message 6 – 0006 – Train Change of Origin
                      if msg_type == '0006'
+                        @stats_n_0006_msgs+=1
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                            p indiv_msg
@@ -643,6 +744,7 @@ module Poller
                      end
                      # Message 7 – 0007 – Train Change of Identity
                      if msg_type == '0007'
+                        @stats_n_0007_msgs+=1
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"    unless @quiet                     
                            p indiv_msg
@@ -653,6 +755,7 @@ module Poller
                      end
                      # Message 8 – 0008 – Train Change of Location
                      if msg_type == '0008'
+                        @stats_n_0008_msgs+=1
                         if tracked_train.nil?
                            puts Time.now.to_s+": the train_id "+train_id+" has not been activated, so we can't xref with timetables"      unless @quiet                   
                            p indiv_msg
