@@ -59,12 +59,21 @@ STDOUT.sync = true
 @previous_bin_end
 @previous_log_time
 
-# msg stats: tracked / not
-@tracked_trains_stats_logfile
-@stats_n_tracked_trains
-@stats_n_untracked_trains
+# activation msg qualitystats. Of all the activation (0001) messages received, how many could be matched against services in our DB?
+# this value should not be affected by whether the parser has just started or not
+@matched_activationmsgs_stats_logfile
+@stats_n_matched_activationmsgs
+@stats_n_unmatched_activationmsgs
 
-# msg stats: type of msg
+# live msg quality stats. Of all the messages received (0001-0008), how many could be matched against services in our DB?
+# when the parser is first started, all messages will be unmatched.
+# as more activation messages are received, it should reduce until, if there
+# the system is working perfectly, there are no unmatched messages
+@matched_livemsgs_stats_logfile
+@stats_n_matched_livemsgs
+@stats_n_unmatched_livemsgs
+
+# msg stats: count of of type of msg
 @msgtype_stats_logfile
 @stats_n_0001_msgs
 @stats_n_0002_msgs
@@ -507,9 +516,16 @@ def log_stats(bin_start_mm, bin_end_mm)
   @previous_bin_end = bin_end_mm
   @previous_log_time = Time.now
 
+
+not
   # timestamp,bin_mm_start,bin_mm_end,target_temporal_resolution,actual_temporal_resolution,n_tracked,n_untracked,n_total
-  CSV.open(@tracked_trains_stats_logfile, "ab") do |csv|
-    csv << [Time.now, bin_start_mm, bin_end_mm, @stats_temporal_resolution_mins, actual_temporal_resolution, @stats_n_tracked_trains, @stats_n_untracked_trains, ( @stats_n_tracked_trains + @stats_n_untracked_trains)]
+  CSV.open(@matched_activationmsgs_stats_logfile, "ab") do |csv|
+    csv << [Time.now, bin_start_mm, bin_end_mm, @stats_temporal_resolution_mins, actual_temporal_resolution, @stats_n_matched_activationmsgs, @stats_n_unmatched_activationmsgs, ( @stats_n_matched_activationmsgs + @stats_n_unmatched_activationmsgs)]
+  end
+
+  # timestamp,bin_mm_start,bin_mm_end,target_temporal_resolution,actual_temporal_resolution,n_tracked,n_untracked,n_total
+  CSV.open(@matched_livemsgs_stats_logfile, "ab") do |csv|
+    csv << [Time.now, bin_start_mm, bin_end_mm, @stats_temporal_resolution_mins, actual_temporal_resolution, @stats_n_matched_livemsgs, @stats_n_unmatched_livemsgs, ( @stats_n_matched_livemsgs + @stats_n_unmatched_livemsgs)]
   end
 
   # append csv file for types of msgs stats  
@@ -527,7 +543,9 @@ def log_stats(bin_start_mm, bin_end_mm)
 end
 # reset all our stats counters to zero
 def reset_stats_counters
-  @stats_n_tracked_trains =  @stats_n_untracked_trains = @stats_n_0001_msgs = @stats_n_0002_msgs = @stats_n_0003_msgs = @stats_n_0004_msgs = @stats_n_0005_msgs = @stats_n_0006_msgs = @stats_n_0007_msgs = @stats_n_0008_msgs = 0
+  @stats_n_matched_activationmsgs = @stats_n_unmatched_activationmsgs = 
+  @stats_n_matched_livemsgs =  @stats_n_unmatched_livemsgs = 
+  @stats_n_0001_msgs = @stats_n_0002_msgs = @stats_n_0003_msgs = @stats_n_0004_msgs = @stats_n_0005_msgs = @stats_n_0006_msgs = @stats_n_0007_msgs = @stats_n_0008_msgs = 0
 end
 
 # get end mins of current time bin, e.g. for 17, get 20 (if 5 min temporal res)
@@ -588,15 +606,26 @@ module Poller
 		reset_stats_counters()
 
 		# Create the logfiles, if they do not exist?
-		@tracked_trains_stats_logfile = 'tracked_trains_stats_logfile.csv'
-		@msgtype_stats_logfile = 'msgtype_stats_logfile.csv'		
+		@matched_activationmsgs_stats_logfile = 'matched_activationmsgs_stats_logfile.csv'
 		# create the tracked trains stats logfile, if doesn't exist - append with header
-		unless File.exist?(@tracked_trains_stats_logfile) 
-			CSV.open(@tracked_trains_stats_logfile, "ab") do |csv|
-				csv << ['timestamp','bin_mm_start','bin_mm_end','target_temporal_resolution_mins','actual_temporal_resolution_secs','n_tracked','n_untracked','n_total']
+		unless File.exist?(@matched_activationmsgs_stats_logfile) 
+			CSV.open(@matched_activationmsgs_stats_logfile, "ab") do |csv|
+				csv << ['timestamp','bin_mm_start','bin_mm_end','target_temporal_resolution_mins','actual_temporal_resolution_secs','n_matched','n_unmatched','n_total']
+			end
+		end  
+
+
+
+		# Create the logfiles, if they do not exist?
+		@matched_livemsgs_stats_logfile = 'matched_livemsgs_stats_logfile.csv'
+		# create the tracked trains stats logfile, if doesn't exist - append with header
+		unless File.exist?(@matched_livemsgs_stats_logfile) 
+			CSV.open(@matched_livemsgs_stats_logfile, "ab") do |csv|
+				csv << ['timestamp','bin_mm_start','bin_mm_end','target_temporal_resolution_mins','actual_temporal_resolution_secs','n_matched','n_unmatched','n_total']
 			end
 		end  
 		# create the msg type stats logfile, if doesn't exist - append with header
+		@msgtype_stats_logfile = 'msgtype_stats_logfile.csv'		
 		unless File.exist?(@msgtype_stats_logfile) 
 			CSV.open(@msgtype_stats_logfile, "ab") do |csv|
 				csv << ['timestamp','bin_mm_start','bin_mm_end','target_temporal_resolution_mins','actual_temporal_resolution_secs','n_0001','n_0002','n_0003','n_0004','n_0005','n_0006','n_0007','n_0008','n_0009','n_total' ]
@@ -683,9 +712,11 @@ module Poller
                      if matching_trackedtrains_res.count.to_i==1
                         tracked_train = matching_trackedtrains_res[0]
                         puts Time.now.to_s+': '+train_id.to_s+' is tracked' unless @quiet                        
-						@stats_n_tracked_trains +=1
+						@stats_n_matched_livemsgs +=1
+						@stats_n_matched_activationmsgs+=1 if msg_type == '0001'
 					else
-						@stats_n_untracked_trains+=1
+						@stats_n_unmatched_livemsgs+=1
+						@stats_n_unmatched_activationmsgs+=1 if msg_type == '0001'
                      end
                      
                      # log this msg
@@ -832,7 +863,7 @@ EM.run {
 		#puts "the time is #{Time.now}"
 		#timer.cancel if (n+=1) > 500
 		elapsed_t_since_statslog = Time.now - @stats_last_report
-		puts 'logging time! @stats_n_untracked_trains = '+@stats_n_untracked_trains.to_s
+		puts 'logging time! @stats_n_unmatched_livemsgs = '+@stats_n_unmatched_livemsgs.to_s
 		# if it is time to log these stats
 		log_stats(elapsed_t_since_statslog) #if (elapsed_t_since_statslog) > @stats_temporal_resolution_secs 
 	end

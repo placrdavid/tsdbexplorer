@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130115162516) do
+ActiveRecord::Schema.define(:version => 20130712132404) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -698,6 +698,22 @@ ActiveRecord::Schema.define(:version => 20130115162516) do
 
   add_index "tracked_trains", ["basic_schedule_uuid"], :name => "index_tracked_trains_on_basic_schedule_uuid"
   add_index "tracked_trains", ["train_id"], :name => "index_tracked_trains_on_train_id"
+
+  create_table "train_jsonschedule_imports", :force => true do |t|
+    t.datetime "import_start"
+    t.datetime "import_end"
+    t.string   "file",               :limit => 500
+    t.datetime "file_lastmod"
+    t.string   "full_partial",       :limit => 1
+    t.string   "classification",     :limit => 36
+    t.datetime "source_timestamp"
+    t.string   "owner",              :limit => 36
+    t.string   "sender_org",         :limit => 36
+    t.string   "sender_application", :limit => 36
+    t.string   "sender_component",   :limit => 36
+    t.datetime "created_at",                        :null => false
+    t.datetime "updated_at",                        :null => false
+  end
 
   create_table "train_movements", :force => true do |t|
     t.string   "basic_schedule_uuid", :limit => 36
