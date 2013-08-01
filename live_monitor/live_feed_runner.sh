@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Runs the live feed parser
 
 (    
@@ -45,7 +45,7 @@
     echo live_feed_runner.rb $RAILS_ENV $VERBOSITY $DIR
 
     echo $PATH
-    rbenv versions
+    #rbenv versions
 
     ruby live_feed_runner.rb $RAILS_ENV $VERBOSITY $DIR >> live_feed_runner.log 2>&1
 

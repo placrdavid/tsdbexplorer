@@ -1,5 +1,5 @@
 GIT
-  remote: git://github.com/poggs/activerecord-import.git
+  remote: https://github.com/poggs/activerecord-import
   revision: d663b72c11bd3cbf40d4c21d7c896c3ee4b10828
   specs:
     activerecord-import (0.2.9)
