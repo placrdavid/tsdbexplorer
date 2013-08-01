@@ -304,7 +304,7 @@ class LiveController < ApplicationController
       # get timetables from schedules
       timetables_array=[] 
       @schedule.each do |schedule|
-      p schedule
+      #p schedule
 		# get the id, and origin/destin
          bs_uuid = schedule[:obj].basic_schedule_uuid
          origin_name = 'nil'

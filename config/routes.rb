@@ -31,6 +31,14 @@ Tsdbexplorer::Application.routes.draw do
 
   match '/healthcheck', :controller => 'healthcheck', :action => 'index'
 
+   # quality metrics - completeness
+  match '/quality/rate_of_missing_tiplocs', :controller => 'quality', :action => 'rate_of_missing_tiplocs'
+  match '/quality/rate_of_missing_locations', :controller => 'quality', :action => 'rate_of_missing_locations'
+  match '/quality/rate_of_missing_basic_schedules', :controller => 'quality', :action => 'rate_of_missing_basic_schedules'
+  match '/quality/rate_of_excess_tiplocs', :controller => 'quality', :action => 'rate_of_excess_tiplocs'
+  match '/quality/rate_of_excess_locations', :controller => 'quality', :action => 'rate_of_excess_locations'
+  match '/quality/rate_of_excess_basic_schedules', :controller => 'quality', :action => 'rate_of_excess_basic_schedules'
+
   match '/location/search', :controller => 'location', :action => 'search'
   match '/location/advanced_search', :controller => 'location', :action => 'advanced_search'
 

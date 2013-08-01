@@ -1,5 +1,7 @@
 #!/bin/bash
 # Runs the live feed parser
+# example usage
+# bash /home/dave/sandbox/demo_livetrains_alltocs/tsdbexplorer/live_monitor/live_feed_runner.sh >> /home/dave/sandbox/demo_livetrains_alltocs/tsdbexplorer/live_monitor/live_feed_runner.log 2>&1
 
 (    
     #make sure we don't get dupes!
