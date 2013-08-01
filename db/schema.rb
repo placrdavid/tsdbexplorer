@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130712132404) do
+ActiveRecord::Schema.define(:version => 20130731095705) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -96,6 +96,7 @@ ActiveRecord::Schema.define(:version => 20130712132404) do
   add_index "basic_schedules", ["stp_indicator"], :name => "index_basic_schedules_on_stp_indicator"
   add_index "basic_schedules", ["train_identity"], :name => "index_basic_schedules_on_train_identity"
   add_index "basic_schedules", ["train_identity_unique"], :name => "index_basic_schedules_on_train_identity_unique"
+  add_index "basic_schedules", ["train_uid", "runs_from", "stp_indicator"], :name => "bsi_trainuid_stpindicator_runsfrom"
   add_index "basic_schedules", ["train_uid"], :name => "index_basic_schedules_on_train_uid"
   add_index "basic_schedules", ["uuid"], :name => "index_basic_schedules_on_uuid"
 
@@ -702,17 +703,21 @@ ActiveRecord::Schema.define(:version => 20130712132404) do
   create_table "train_jsonschedule_imports", :force => true do |t|
     t.datetime "import_start"
     t.datetime "import_end"
-    t.string   "file",               :limit => 500
+    t.string   "file",                 :limit => 500
     t.datetime "file_lastmod"
-    t.string   "full_partial",       :limit => 1
-    t.string   "classification",     :limit => 36
+    t.string   "full_partial",         :limit => 1
+    t.string   "classification",       :limit => 36
     t.datetime "source_timestamp"
-    t.string   "owner",              :limit => 36
-    t.string   "sender_org",         :limit => 36
-    t.string   "sender_application", :limit => 36
-    t.string   "sender_component",   :limit => 36
-    t.datetime "created_at",                        :null => false
-    t.datetime "updated_at",                        :null => false
+    t.string   "owner",                :limit => 36
+    t.string   "sender_org",           :limit => 36
+    t.string   "sender_application",   :limit => 36
+    t.string   "sender_component",     :limit => 36
+    t.datetime "created_at",                          :null => false
+    t.datetime "updated_at",                          :null => false
+    t.integer  "basic_schedules_size"
+    t.integer  "locations_size"
+    t.integer  "filesize",             :limit => 8
+    t.integer  "duration_secs"
   end
 
   create_table "train_movements", :force => true do |t|
