@@ -39,6 +39,9 @@ Tsdbexplorer::Application.routes.draw do
   match '/quality/rate_of_excess_locations', :controller => 'quality', :action => 'rate_of_excess_locations'
   match '/quality/rate_of_excess_basic_schedules', :controller => 'quality', :action => 'rate_of_excess_basic_schedules'
 
+  # a completeness test for live departures for trains from a given station, now
+  match '/quality/live/station/:tiploc/completeness', :controller => 'live', :action => 'stations_updates_quality_json'
+
   match '/location/search', :controller => 'location', :action => 'search'
   match '/location/advanced_search', :controller => 'location', :action => 'advanced_search'
 

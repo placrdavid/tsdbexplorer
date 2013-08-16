@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130731095705) do
+ActiveRecord::Schema.define(:version => 20130812115638) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -80,6 +80,7 @@ ActiveRecord::Schema.define(:version => 20130731095705) do
     t.string   "origin_name",               :limit => 26
     t.string   "destin_tiploc",             :limit => 7
     t.string   "destin_name",               :limit => 26
+    t.string   "origin_public_departure",   :limit => 5
   end
 
   add_index "basic_schedules", ["category"], :name => "index_basic_schedules_on_category"
