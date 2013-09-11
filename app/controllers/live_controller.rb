@@ -4,6 +4,7 @@
 # A live departures controller
 ###########################################################
 
+
 require 'json'
 require "performance" # works
 
@@ -242,32 +243,34 @@ class LiveController < ApplicationController
 
    end
 
-	# a quality test for live station updates. how many are tracked?
-	def stations_updates_quality_json
+=begin
+  # a quality test for live station updates. how many are tracked?
+  def stations_updates_quality_json
 
-      tiplocs_string = params[:tiploc].upcase
-      
+    tiplocs_string = params[:tiploc].upcase
 
-		# formulate a hash response
-		@response = {}
-		@response['tiploc_code'] = tiplocs_string
-		@response['departures'] = []
-		
+    # formulate a hash response
+    @response = {}
+    @response['tiploc_code'] = tiplocs_string
+    @response['departures'] = []
+
+    # for each departure, compare time departed origin with now.
+    now = Time.now
+
+    # if the train is supposed to have departured, but we have no activation msg, 
+    #
+    # perform checks to assess whether we have any activation/movement msgs for this service, and if it should be moving at this time
+    activation_msg_received=false
+    movement_msg_received=false
+    train_should_be_moving=false
 
 
-		# for each departure, compare time departed origin with now.
-		now = Time.now
-		
-		# if the train is supposed to have departured, but we have no activation msg, 
-		#
-		
-		
-		# transform to json, and respond
-		output_json = @response.to_json
-		send_data output_json, :type => "text/plain", :disposition => 'inline'      
+    # transform to json, and respond
+    output_json = @response.to_json
+    send_data output_json, :type => "text/plain", :disposition => 'inline'      
 
-	end
-
+  end
+=end
 
 
 
@@ -277,277 +280,415 @@ class LiveController < ApplicationController
       # formulate a hash response
       @response = get_stations_updates_hash
 
-
-
       # transform to json, and respond
       output_json = @response.to_json
       send_data output_json, :type => "text/plain", :disposition => 'inline'
    end
    
    
-   # Return all known live updates for a station, as a hash
-   def get_stations_updates_hash
+    # Return all known live updates for a station, as a hash
+    def get_stations_updates_hash
 
-		# vehicle mode key and value names
-		# These MUST be synchronised with the Transport API config/initializers/transportapi.rb file
-		# VEHICLE_MODE_KEY_NAME, VEHICLE_MODE_BUS_VALUE, VEHICLE_MODE_TRAIN_VALUE
-		vehicle_mode_key_name = 'mode'
-		vehicle_mode_bus_value = 'bus'
-		vehicle_mode_train_value = 'train'
+        # vehicle mode key and value names
+        # These MUST be synchronised with the Transport API config/initializers/transportapi.rb file
+        # VEHICLE_MODE_KEY_NAME, VEHICLE_MODE_BUS_VALUE, VEHICLE_MODE_TRAIN_VALUE
+        vehicle_mode_key_name = 'mode'
+        vehicle_mode_bus_value = 'bus'
+        vehicle_mode_train_value = 'train'
 
+        # what to order by? planned_departure by default. Must be one planned/predicted_planned_departure/arrival
+        order_by = 'planned_departure_timestamp'
+        order_options = ['planned_arrival_timestamp', 'predicted_arrival_timestamp', 'planned_departure_timestamp', 'predicted_departure_timestamp']
+        unless params[:order_by].nil?
+            order_by = params[:order_by] if order_options.include?params[:order_by]
+        end
 
-      # what to order by? planned_departure by default. Must be one planned/predicted_planned_departure/arrival
-      order_by = 'planned_departure_timestamp'
-      order_options = ['planned_arrival_timestamp', 'predicted_arrival_timestamp', 'planned_departure_timestamp', 'predicted_departure_timestamp']
-      unless params[:order_by].nil?
-         order_by = params[:order_by] if order_options.include?params[:order_by]
-      end
+        # Get incoming tiplocs: a comma separated string
+        tiplocs_string = params[:tiploc].upcase
+        tiplocs_orig_array = tiplocs_string.split(',')      
+        tiplocs_final_array = tiplocs_orig_array
 
-      # Get incoming tiplocs: a comma separated string
-      tiplocs_string = params[:tiploc].upcase
-      tiplocs_orig_array = tiplocs_string.split(',')      
-      tiplocs_final_array = tiplocs_orig_array
+        # get our locations, ordered as requested
+        if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
+            @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
+        else
+            @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure)
+        end      
 
-	  # get our locations, ordered as requested
-      if (order_by == 'planned_arrival_timestamp' or order_by == 'predicted_arrival_timestamp')
-         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_arrival)
-      else
-         @schedule = Location.where(:tiploc_code => tiplocs_final_array).order(:public_departure)
-      end      
-      
-      #p @schedule
+        # get the timerange, based on now
+        now = DateTime.now
 
-      # get the timerange, based on now
-      now = DateTime.now
+        # a useful snippet for altering 'now' for debug, e.g. for the midnight wrapping bug
+        debug=false
+        if debug
+            now = DateTime.now.midnight
+        end
+        before_range = 1.hour
+        after_range = 2.hour
+        @range = Hash.new
+        @range[:from] = now -before_range
+        @range[:to] = now + after_range
+        @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
 
-	  # a useful snippet for altering 'now' for debug, e.g. for the midnight wrapping bug
-	  debug  =false
-	  if debug
-      	now = DateTime.now.midnight
-      	
-#      	now = now - 61.minutes # ok
-#      	now = now - 59.minutes # ok
-#      	now = now - 10.minutes # ok
-#      	now = now - 1.minutes # ok
-#      	now = now + 1.minutes # ok
-#      	now = now + 50.minutes #  ok
-#      	now = now + 61.minutes # bug!
-#      	now = now + 91.minutes # ok
+        # get timetables from schedules
+        timetables_array=[] 
+        @schedule.each do |schedule|
 
-#      	now = now + 31.days
-#      	now = now + 10.hour
-#      	now = now + 45.minute
-#      	puts 'setting the date to future'
-  	  end
-      before_range = 1.hour
-      after_range = 2.hour
-      @range = Hash.new
-      @range[:from] = now -before_range
-      @range[:to] = now + after_range
-      @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
-
-      # get timetables from schedules
-      timetables_array=[] 
-      @schedule.each do |schedule|
-         #p schedule
-		 # get the id, and origin/destin
-         bs_uuid = schedule[:obj].basic_schedule_uuid
-         origin_name = 'nil'
-         destin_name = 'nil' 
-         origin_departure_public = 'nil'
-         origin_name = schedule[:obj].basic_schedule.origin_name
-         destin_name = schedule[:obj].basic_schedule.destin_name
-         origin_departure_public =  schedule[:obj].basic_schedule.origin_public_departure
-         
-		 # find out if this train should have left the origin
-         train_should_have_left_origin = false
-         # TODO when we have populated this field!!! run the cmd
-         #origin_departure_ts = departure_timestamp_from_live_hhcmm(origin_departure_public)
-         #train_should_have_left_origin = true if origin_departure_ts >= Time.now
-         
-         # find any matching activation msg         
-         activation_msg_received = false
-         live_activation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
-         if live_activation_msgs.size() ==1
-	         activation_msg_received = true
-    	     puts 'more than 1 activation msg received for basic-schedule with uuid = '+bs_uuid.to_s+'. This is a problem' if live_activation_msgs.size() > 1
-         end
-         
-         train_uid = schedule[:obj].basic_schedule.train_uid
-		 # origin_depart_time = schedule[:obj].basic_schedule.train_uid
-		 #origin_depart_time = schedule[:obj].basic_schedule.train_uid
-         # get the origin depart time
-         
-         # get the mode, based on category: see http://www.atoc.org/clientfiles/File/RSPS5004%20v27.pdf page iv 
-         # note that vehicle_mode_train_value must be synched with TAPI config/initializers/transportapi.rb file
-         mode = vehicle_mode_train_value
-         if schedule[:obj].basic_schedule.category[0] == 'B'
-	         mode = vehicle_mode_bus_value
-         end
-
-	     # create a datetime from a date and a time, for arr and dep
-	     # move this to a distinct method
-         unless schedule[:obj].public_arrival.nil?
-            planned_arrival_hhmm = schedule[:obj].public_arrival
-            planned_ds_arrival_day = schedule[:runs_on]
-			if schedule[:obj].next_day_arrival == true # add an extra day, if its a next day arrival
-				planned_ds_arrival_day = planned_ds_arrival_day+1.day 
-			end		
-            planned_arrival_ts = now
-            planned_arrival_ts = planned_arrival_ts.change({:year => planned_ds_arrival_day.year,:month => planned_ds_arrival_day.month,:day => planned_ds_arrival_day.day,:hour => planned_arrival_hhmm[0,2].to_i, :min => planned_arrival_hhmm[2,2].to_i,:sec => 0})
-         end
-         unless schedule[:obj].public_departure.nil?
-            planned_departure_hhmm = schedule[:obj].public_departure
-            planned_ds_departure_day = schedule[:runs_on]
-            if schedule[:obj].next_day_departure == true         # add an extra day, if its a next day arrival
-	            planned_ds_departure_day = planned_ds_departure_day+1.day  
-	        end
-	        # a bug is still observed here for when    
-	        # now = now + 61.minutes # bug!
-# for the URL http://placraa3.miniserver.com:3000/live/station/CLPHMJC
-# http://4.placr.co.uk/v3/uk/train/station/CLJ/live
-# 00:07	London Victoria	no report	14 is observed
-# {:a=>Wed, 11 Jun 2014 00:00:00 +0100, :p=>nil, :d=>Sun, 10 Aug 2014 00:00:00 +0100, :runs_on=>Fri, 17 May 2013 00:00:00 +0100, :obj=>#<Location id: 8198022, basic_schedule_uuid: "db049eb0-9e0e-0130-093d-10b11c15c7ff", location_type: "LI", tiploc_code: "CLPHMJC", tiploc_instance: nil, arrival: "0006H", public_arrival: "0007", pass: nil, departure: "0007H", public_departure: "0007", platform: "14", line: "SL", path: nil, engineering_allowance: nil, pathing_allowance: nil, performance_allowance: nil, created_at: "2013-05-13 15:22:42", updated_at: "2013-05-13 15:22:42", seq: 160, activity_ae: false, activity_bl: false, activity_minusd: false, activity_hh: false, activity_kc: false, activity_ke: false, activity_kf: false, activity_ks: false, activity_op: false, activity_or: false, activity_pr: false, activity_rm: false, activity_rr: false, activity_minust: false, activity_tb: false, activity_tf: false, activity_ts: false, activity_tw: false, activity_minusu: false, activity_a: false, activity_c: false, activity_d: false, activity_e: false, activity_g: false, activity_h: false, activity_k: false, activity_l: false, activity_n: false, activity_r: false, activity_s: false, activity_t: true, activity_u: false, activity_w: false, activity_x: false, next_day_arrival: false, next_day_departure: true, arrival_secs: 390, departure_secs: 450, pass_secs: nil, public_arrival_secs: 420, public_departure_secs: 420>}
-            planned_departure_ts = now
-            planned_departure_ts = planned_departure_ts.change({:year => planned_ds_departure_day.year,:month => planned_ds_departure_day.month,:day => planned_ds_departure_day.day,:hour => planned_departure_hhmm[0,2].to_i, :min => planned_departure_hhmm[2,2].to_i,:sec => 0})
-         end
-
-         matching_station_update = nil
-
-         # get matching movement updates, based on uuid, and tiploc
-         live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
-
-		 # flags if train is cancelled
-         cancelled = false
-
-
-		 # use live platform information, if available
-		 live_platform = nil 
-
-
-         if live_movement_msgs.size() ==1
-            move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
-            event_type = move_msg['event_type']
-            variation_status = move_msg['variation_status']
-            timetable_variation_mins = move_msg['timetable_variation'].to_i
             
-            # is this an arrival message, related to this station? Get this from loc_stanox...
-			# if so, we can use the live platform information
-			#live_platform = move_msg['platform'] this is the platform of the tiploc reporting the train's location, not necessarily the platform from which it will depart 
-			
-            # get variation from timetable
-            if timetable_variation_mins!= nil
-               diff_from_timetable_secs = 0         
-               # note we only adjust for late trains. early trains will just be on time!
-               diff_from_timetable_secs = timetable_variation_mins*60  if move_msg['variation_status'] == 'LATE'
-#               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs) unless planned_departure_ts.nil?
-#               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs) unless planned_arrival_ts.nil?               
-               predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs.seconds) unless planned_departure_ts.nil?
-               predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs.seconds) unless planned_arrival_ts.nil?               
-            end
-         else
-            # get matching cancel updates, based on uuid, and tiploc
-            live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
-            if live_cancellation_msgs.size() ==1
-               cancelled = true
-            end
-         end
-          
-         # check the include conditions: is planned/predicted arrival/departure in past/future
-         planned_arrival_future = (now <= planned_arrival_ts) unless planned_arrival_ts.nil?
-         predicted_arrival_future = (now <= predicted_arrival_timestamp) unless predicted_arrival_timestamp.nil?
-         planned_departure_future = (now <= planned_departure_ts) unless planned_departure_ts.nil?
-         predicted_departure_future = (now <= predicted_departure_timestamp) unless predicted_departure_timestamp.nil?
+            
+            #puts '================='
+            #p schedule
+            # get the id, and origin/destin
+            bs_uuid = schedule[:obj].basic_schedule_uuid
+            #origin_name = 'nil'
+            #destin_name = 'nil' 
+            #origin_departure_public = 'nil'
+            origin_name = schedule[:obj].basic_schedule.origin_name
+            origin_name = schedule[:obj].basic_schedule.origin_tiploc if origin_name.nil?
+            destin_name = schedule[:obj].basic_schedule.destin_name
+            destin_name = schedule[:obj].basic_schedule.destin_tiploc if destin_name.nil?
+            origin_departure_public =  schedule[:obj].basic_schedule.origin_public_departure
+            train_uid = schedule[:obj].basic_schedule.train_uid
 
-         # whether to include this departure (default=false)
-         include_dep = false
-         # We only want to include future events
-         # Hierarchy of checks of whether or not to include, set by first of 
-         #   predicted departure, predicted arrival, planned departure, planned arrival
-         # that is not null
-         if predicted_departure_future != nil
-            include_dep = predicted_departure_future
-         elsif predicted_arrival_future != nil
-            include_dep = predicted_arrival_future
-         elsif planned_departure_future != nil
-            include_dep = planned_departure_future
-         elsif planned_arrival_future != nil
-            include_dep = planned_arrival_future
-         else 
-            include_dep = false
-         end
-         
-         # Report live platform if available, else report the timetabled platform departure
-         # Since live platform inform
-         timetabled_platform = schedule[:obj].platform
-         platform_to_report = timetabled_platform
-         
+            # get the mode, based on category: see http://www.atoc.org/clientfiles/File/RSPS5004%20v27.pdf page iv 
+            # note that vehicle_mode_train_value must be synched with TAPI config/initializers/transportapi.rb file
+            mode = vehicle_mode_train_value
+            if schedule[:obj].basic_schedule.category[0] == 'B'
+                mode = vehicle_mode_bus_value
+            end
+
+            # get the timestamp for arrival/departure time
+            planned_arrival_ts = date_and_time_to_timestamp(schedule[:runs_on], schedule[:obj].public_arrival, schedule[:obj].next_day_arrival)
+            planned_departure_ts = date_and_time_to_timestamp(schedule[:runs_on], schedule[:obj].public_departure, schedule[:obj].next_day_departure)
+
+            # should this train now be moving, according to timetable?
+            train_scheduled_to_have_left_origin = false
+            #puts "schedule[:obj].basic_schedule = "+schedule[:obj].basic_schedule.to_s
+            #puts "schedule[:obj].basic_schedule.origin_public_departure = "+schedule[:obj].basic_schedule.origin_public_departure.to_s
+            #puts "schedule[:obj].basic_schedule.uuid = "+schedule[:obj].basic_schedule.uuid.to_s
+            origin_departure_ts = date_and_time_to_timestamp(schedule[:runs_on], schedule[:obj].basic_schedule.origin_public_departure, false)
+            #puts "origin_departure_ts = "+origin_departure_ts.to_s
+            # TODO allow for 1 minute grace
+            unless origin_departure_ts.nil?
+                
+             #       puts 'train scheduled to be moving'
+                    train_scheduled_to_have_left_origin = true if origin_departure_ts < (now - 1.minute)
+             #   else 
+             #       puts 'train not scheduled to be moving'
+             #   end
+             else
+                 puts 'DEPARTURE TIME FROM ORIGIN IS NULL - '
+             end
+ 
+				 puts 'origin_name = '+origin_name.to_s
+				 puts 'destin_name = '+destin_name.to_s
+				 puts "train_scheduled_to_have_left_origin = "+train_scheduled_to_have_left_origin.to_s
+				 puts "origin_departure_ts = "+origin_departure_ts.to_s
+				 puts "now = "+now.to_s
+				 puts "planned_arrival_ts = "+planned_arrival_ts.to_s unless planned_arrival_ts.nil?
+				 puts "planned_departure_ts = "+planned_departure_ts.to_s unless planned_departure_ts.nil?
+				# is this an origin station
+				#puts 'schedule[:obj].basic_schedule.origin_public_departure = ' +schedule[:obj].basic_schedule.origin_public_departure.to_s
+                
+#            augmented_variation_status = "null status"
+            augmented_variation_status = "NO REPORT"
+				# record if this is an origin station
+				origin_station = false
+				if schedule[:obj].basic_schedule.origin_public_departure ==  schedule[:obj].public_departure
+					puts "this is an origin station"
+					origin_station = true
+				end
+
+				puts 'bs_uuid '+bs_uuid
+
+				#puts 'setting augmented_variation_status to default '+augmented_variation_status
+            live_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).order('updated_at DESC')
+            n_live_msgs = live_msgs.size()
+				puts 'n_live_msgs = '+n_live_msgs.to_s
+            cancelled = false
+            # case where we have a live msg - will dictate our status report
+            if n_live_msgs >=1
+                # get the latest msg
+                live_msg_body = JSON.parse(live_msgs[0]['msg_body'])
+                live_msg = live_msgs[0]
+                msg_type = live_msg['msg_type']
+
+                #puts "live_msg_body = "+live_msg_body.to_s
+                #puts "msg_type = "+msg_type.to_s
+            
+                # the ordering is important, since these are if/elses
+                # 
+                if msg_type == '0003' # movement
+						 puts 'we got a 0003 msg'
+                    #puts 'movement'
+						  #p live_msg_body
+                    event_type = live_msg_body['event_type']
+                    augmented_variation_status = live_msg_body['variation_status']
+		  				  #puts 'setting augmented_variation_status to live_msg[variation_status] '+augmented_variation_status
+						  
+                    timetable_variation_mins = live_msg_body['timetable_variation'].to_i
+                    
+                    # is this an arrival message, related to this station? Get this from loc_stanox...
+                    # if so, we can use the live platform information			
+                    # get variation from timetable
+                    if timetable_variation_mins!= nil
+	  						 puts 'timetable_variation_mins = '+timetable_variation_mins.to_s
+                        diff_from_timetable_secs = 0         
+                        # note we only adjust for late trains. early trains will just be on time!
+                        diff_from_timetable_secs = timetable_variation_mins*60  if live_msg_body['variation_status'] == 'LATE'
+                        predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs.seconds) unless planned_departure_ts.nil?
+                        predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs.seconds) unless planned_arrival_ts.nil?               
+                        # be more sophisticated in definition of 'late', 'early', 'on time'
+                        # if more than 2 mins late, report late. Otherwise, report 'on time'
+                    end                    
+                elsif msg_type == '0005' # reinstatement TODO handle this case
+                    puts 'reinstatement'
+                    augmented_variation_status = 'REINSTATEMENT'
+		  				  puts 'setting augmented_variation_status to REINSTATEMENT '+augmented_variation_status
+						  
+                elsif msg_type == '0002' # cancellation
+                    puts 'cancellation'
+                    cancelled = true
+                    augmented_variation_status = 'CANCELLED'
+		  				  puts 'setting augmented_variation_status to CANCELLED '+augmented_variation_status						  
+#                elsif msg_type == '0004' # unidentified - NOT USED IN PROD
+#                    puts 'unidentified'
+#                    augmented_variation_status = 'UNIDENTIFIED'
+                elsif msg_type == '0006' # change_of_origin TODO handle this case
+                    puts 'change_of_origin'
+                    augmented_variation_status = 'CHANGE OF ORIGIN'
+		  				  puts 'setting augmented_variation_status to CHANGE OF ORIGIN '+augmented_variation_status
+						  
+                elsif msg_type == '0007' # change_of_identity TODO handle this case
+                    puts 'change_of_identity'
+                    augmented_variation_status = 'CHANGE OF IDENTITY'
+		  				  puts 'setting augmented_variation_status to HANGE OF IDENTITY '+augmented_variation_status
+						  
+#                elsif msg_type == '0008' # change_of_location - NOT USED IN PROD
+#                    puts 'change_of_location'
+#                    augmented_variation_status = 'UNIDENTIFIED'
+	             elsif  msg_type == '0001' # activation
+		             puts 'activation'
+		             if train_scheduled_to_have_left_origin
+		                 puts 'train is supposed to be moving'
+		                 augmented_variation_status = 'LATE'
+			  				  puts 'setting augmented_variation_status to LATE '+augmented_variation_status							  
+		             else
+		                 #puts 'train not moving yet'
+		                 augmented_variation_status = 'ON TIME'    
+							  # TODO but if its an origin station, say 'starts here'
+							  augmented_variation_status = 'STARTS HERE'    if origin_station == true
+			  				  puts 'setting augmented_variation_status to ON TIME '+augmented_variation_status							                  
+		             end
+
+	             #elsif msg_type == '0008' # change_of_location - NOT USED IN PROD
+	             #    puts 'change_of_location'					 
+                else
+                    puts 'unknown or unused msg type '+ msg_type.to_s
+                end
+            # if no live msgs...
+            else # n_live_msgs ==0- by definition, no activation msg has been received
+#                puts "no live msgs"
+
 =begin
-# would have to check that the live platform refers to this station, prior to using it!
-		platform_to_report = live_platform unless live_platform.nil? 
-         if live_platform.nil?
-			puts 'the live message reported no platform information!'
-		 else
-			puts 'the live message reported platform as '+ live_platform.to_s
-		 end
+                activation_msg_received = false
+                # has train been activated?
+                activation_msgs = TrackedTrain.where( :basic_schedule_uuid => bs_uuid )
+                if activation_msgs.size() ==1
+                    activation_msg_received = true
+                elsif 	activation_msgs.size() > 1
+                    puts 'multiple activation messages for a single scheduled departure'
+                    p schedule
+                    puts 'problematic'
+                else 
+                    puts 'no activation msgs for bs_uuid '+bs_uuid.to_s
+                end
+=end                
+                # if train is supposed to have left origin....
+                if train_scheduled_to_have_left_origin
+=begin
+                    if activation_msg_received # if we've had an activation, assume its late
+                        augmented_variation_status = 'LATE'
+	 		  				   #puts 'setting augmented_variation_status to LATE '+augmented_variation_status								
+                        #puts "train should be moving - list as no report - we should at least have received an activation by now"
+                    else # if no activatin received, this is a no report
 =end
-         
-         # for arrs/deps that are in the future, construct and add a hash
-         if include_dep
-            timetable_hash = {}
+                        augmented_variation_status = 'NO REPORT'
+ 	 		  				   #puts 'setting augmented_variation_status to NO REPORT '+augmented_variation_status								
+                        #puts "train should be moving - list as no report - we should at least have received an activation by now"
+#                    end
+                else # if its not supposed to have left origin, assume its on time
+                    augmented_variation_status = 'ON TIME'   
+						  # TODO but if its an origin station, say 'starts here'
+						  augmented_variation_status = 'STARTS HERE'  if origin_station == true						  
+ 		  				  #puts 'setting augmented_variation_status to ON TIME '+augmented_variation_status
+                    #puts "train not yet moving - assume that train will on time?"
+                end
+            #else
+            #    puts ""+n_live_msgs.to_s+" live msgs ? This is problematic"
+            end
+            puts 'final augmented_variation_status ='+augmented_variation_status.to_s
+            puts '--------------------------------------------------------'
 
-            timetable_hash[vehicle_mode_key_name] = mode
-            timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
-            timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
-
-            timetable_hash['platform'] = platform_to_report
-
-            timetable_hash['origin_name'] = origin_name
-            timetable_hash['origin_departure'] = origin_departure_public
-            timetable_hash['destination_name'] = destin_name         
-            timetable_hash['train_uid'] = train_uid         
-			timetable_hash['activation_msg_received'] = activation_msg_received         
-			timetable_hash['train_should_have_left_origin'] = train_should_have_left_origin         
+=begin            
+            # have we received an activation msg for this scheduled service 
+            activation_msg_received = false
+            # have we received a movement msg for this scheduled service 
+            movement_msg_received = false
             
-            timetable_hash['diff_from_timetable_secs'] = 0
-            timetable_hash['diff_from_timetable_secs'] = diff_from_timetable_secs unless diff_from_timetable_secs.nil?
-            timetable_hash['diff_from_timetable_secs'] = nil if cancelled == true
 
-            timetable_hash['planned_arrival_timestamp'] = planned_arrival_ts
-            timetable_hash['predicted_arrival_timestamp'] = planned_arrival_ts
-            timetable_hash['predicted_arrival_timestamp'] = predicted_arrival_timestamp unless predicted_arrival_timestamp.nil?         
-            timetable_hash['predicted_arrival_timestamp'] = nil if cancelled == true
+            activation_msgs = TrackedTrain.where( :basic_schedule_uuid => bs_uuid )
+            if activation_msgs.size() ==1
+                activation_msg_received = true
+            elsif 	activation_msgs.size() > 1
+                puts 'multiple activation messages for a single scheduled departure'
+                p schedule
+                puts 'problematic'
+            else 
+                puts 'no activation msgs for bs_uuid '+bs_uuid.to_s
+            end
+            # get matching movement updates, based on uuid, and tiploc
+            live_movement_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0003' )
 
-            timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
-            timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
-            timetable_hash['predicted_departure_timestamp'] = predicted_departure_timestamp unless predicted_departure_timestamp.nil?         
-            timetable_hash['predicted_departure_timestamp'] = nil if cancelled == true
-
-            timetable_hash['event_type'] = nil
-            timetable_hash['event_type'] =event_type unless event_type.nil?
-            timetable_hash['variation_status'] = 'NO REPORT'         
-            timetable_hash['variation_status'] = 'CANCELLED' if cancelled == true
-            timetable_hash['variation_status'] = variation_status unless variation_status.nil?
-            timetable_hash['operator_ref'] = nil
-            timetable_hash['service_name'] = nil
-            timetable_hash['service_name'] = schedule[:obj].basic_schedule.service_code unless schedule[:obj].basic_schedule.nil?
-            timetable_hash['operator_ref'] = schedule[:obj].basic_schedule.atoc_code unless schedule[:obj].basic_schedule.nil?
-            timetables_array << timetable_hash       
-         end
-         
-      end
+            # flags if train is cancelled
+            cancelled = false
 
 
-      # formulate a hash response
-      @response = {}
-      @response['tiploc_code'] = tiplocs_final_array
-      @response['departures'] = timetables_array
-      return @response
-      
-      # transform to json, and respond
-      #output_json = @response.to_json
-      #send_data output_json, :type => "text/plain", :disposition => 'inline'
-   end
+
+            #origin_departure_ts = origin_departure_ts.change({:year => origin_departure_day.year,:month => origin_departure_day.month,:day => origin_departure_day.day,:hour => origin_public_departure[0,2].to_i, :min => origin_public_departure[2,2].to_i,:sec => 0})
+            #puts 'origin_departure_ts = '
+            #p origin_departure_ts
+
+
+            # use live platform information, if available
+            #live_platform = nil 
+
+            if live_movement_msgs.size() ==1
+                movement_msg_received = true
+                move_msg = JSON.parse(live_movement_msgs[0]['msg_body'])
+                event_type = move_msg['event_type']
+                variation_status = move_msg['variation_status']
+                timetable_variation_mins = move_msg['timetable_variation'].to_i
+
+                # is this an arrival message, related to this station? Get this from loc_stanox...
+                # if so, we can use the live platform information			
+                # get variation from timetable
+                if timetable_variation_mins!= nil
+                    diff_from_timetable_secs = 0         
+                    # note we only adjust for late trains. early trains will just be on time!
+                    diff_from_timetable_secs = timetable_variation_mins*60  if move_msg['variation_status'] == 'LATE'
+                    predicted_departure_timestamp = planned_departure_ts+(diff_from_timetable_secs.seconds) unless planned_departure_ts.nil?
+                    predicted_arrival_timestamp = planned_arrival_ts+(diff_from_timetable_secs.seconds) unless planned_arrival_ts.nil?               
+                end
+            else
+                # get matching cancel updates, based on uuid, and tiploc
+                live_cancellation_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).where( :msg_type => '0002' )      
+                if live_cancellation_msgs.size() ==1
+                    cancelled = true
+                end
+            end
+=end
+            
+            
+            # check the include conditions: is planned/predicted arrival/departure in past/future
+            planned_arrival_future = (now <= planned_arrival_ts) unless planned_arrival_ts.nil?
+            predicted_arrival_future = (now <= predicted_arrival_timestamp) unless predicted_arrival_timestamp.nil?
+            planned_departure_future = (now <= planned_departure_ts) unless planned_departure_ts.nil?
+            predicted_departure_future = (now <= predicted_departure_timestamp) unless predicted_departure_timestamp.nil?
+
+            # whether to include this departure (default=false)
+            include_dep = false
+            # We only want to include future events
+            # Hierarchy of checks of whether or not to include, set by first of 
+            #   predicted departure, predicted arrival, planned departure, planned arrival
+            # that is not null
+            if predicted_departure_future != nil
+                include_dep = predicted_departure_future
+            elsif predicted_arrival_future != nil
+                include_dep = predicted_arrival_future
+            elsif planned_departure_future != nil
+                include_dep = planned_departure_future
+            elsif planned_arrival_future != nil
+                include_dep = planned_arrival_future
+            else 
+                include_dep = false
+            end
+
+            # Live platform info is only available as a trains pulls into station (the latest arrival msg)  - so we are forced to use timetabled platform
+            timetabled_platform = schedule[:obj].platform
+            platform_to_report = timetabled_platform
+
+            # for arrs/deps that are in the future, construct and add a hash
+            if include_dep
+
+                #augmented_variation_status = 'NO REPORT'         
+                #augmented_variation_status = 'CANCELLED' if cancelled == true
+
+                #augmented_variation_status = variation_status unless variation_status.nil?
+
+                # have we received an activation msg for this scheduled service 
+                #puts "activation_msg_received = "+activation_msg_received.to_s
+                #puts "movement_msg_received = "+movement_msg_received.to_s
+                #puts "train_scheduled_to_have_left_origin = "+train_scheduled_to_have_left_origin.to_s
+
+
+                #if variation_status.nil? 
+                #    puts 'augmented_variation_status is nil'
+                #else
+                #    puts 'augmented_variation_status = '+augmented_variation_status.to_s
+                #end
+
+                timetable_hash = {}
+
+                timetable_hash[vehicle_mode_key_name] = mode
+                timetable_hash['tiploc_code'] = schedule[:obj].tiploc_code
+                timetable_hash['station_name'] = schedule[:obj].tiploc.tps_description
+
+                timetable_hash['platform'] = platform_to_report
+
+                timetable_hash['origin_name'] = origin_name
+                timetable_hash['origin_departure'] = origin_departure_public
+                timetable_hash['destination_name'] = destin_name         
+                timetable_hash['train_uid'] = train_uid         
+                #timetable_hash['activation_msg_received'] = activation_msg_received         
+                #timetable_hash['movement_msg_received'] = movement_msg_received         
+                timetable_hash['train_scheduled_to_have_left_origin'] = train_scheduled_to_have_left_origin         
+
+                timetable_hash['diff_from_timetable_secs'] = 0
+                timetable_hash['diff_from_timetable_secs'] = diff_from_timetable_secs unless diff_from_timetable_secs.nil?
+                timetable_hash['diff_from_timetable_secs'] = nil if cancelled == true
+
+                timetable_hash['planned_arrival_timestamp'] = planned_arrival_ts
+                timetable_hash['predicted_arrival_timestamp'] = planned_arrival_ts
+                timetable_hash['predicted_arrival_timestamp'] = predicted_arrival_timestamp unless predicted_arrival_timestamp.nil?         
+                timetable_hash['predicted_arrival_timestamp'] = nil if cancelled == true
+
+                timetable_hash['planned_departure_timestamp'] = planned_departure_ts         
+                timetable_hash['predicted_departure_timestamp'] = planned_departure_ts
+                timetable_hash['predicted_departure_timestamp'] = predicted_departure_timestamp unless predicted_departure_timestamp.nil?         
+                timetable_hash['predicted_departure_timestamp'] = nil if cancelled == true
+
+                timetable_hash['event_type'] = nil
+                timetable_hash['event_type'] =event_type unless event_type.nil?
+					 #augmented_variation_status = 'NO REPORT'
+                timetable_hash['variation_status'] = augmented_variation_status        
+                timetable_hash['operator_ref'] = nil
+                timetable_hash['service_name'] = nil
+                timetable_hash['service_name'] = schedule[:obj].basic_schedule.service_code unless schedule[:obj].basic_schedule.nil?
+                timetable_hash['operator_ref'] = schedule[:obj].basic_schedule.atoc_code unless schedule[:obj].basic_schedule.nil?
+                timetables_array << timetable_hash       
+            end
+
+        end
+
+
+        # formulate a hash response
+        @response = {}
+        @response['tiploc_code'] = tiplocs_final_array
+        @response['departures'] = timetables_array
+        return @response
+
+    end
 
 =begin
 
@@ -784,4 +925,29 @@ class LiveController < ApplicationController
 		return dep_timestamp
 	end
 	
+    
+    
+    # converts a departure date (as a timestamp), a time as (hhmm), and whether a scheduled time is next day relative to service origin departure (as t/f)
+    # into a timestamp for a departure
+    # a bug is still observed here for when    
+    # now = now + 61.minutes # bug!
+    # for the URL http://placraa3.miniserver.com:3000/live/station/CLPHMJC
+    # http://4.placr.co.uk/v3/uk/train/station/CLJ/live
+    # 00:07	London Victoria	no report	14 is observed
+    # {:a=>Wed, 11 Jun 2014 00:00:00 +0100, :p=>nil, :d=>Sun, 10 Aug 2014 00:00:00 +0100, :runs_on=>Fri, 17 May 2013 00:00:00 +0100, :obj=>#<Location id: 8198022, basic_schedule_uuid: "db049eb0-9e0e-0130-093d-10b11c15c7ff", location_type: "LI", tiploc_code: "CLPHMJC", tiploc_instance: nil, arrival: "0006H", public_arrival: "0007", pass: nil, departure: "0007H", public_departure: "0007", platform: "14", line: "SL", path: nil, engineering_allowance: nil, pathing_allowance: nil, performance_allowance: nil, created_at: "2013-05-13 15:22:42", updated_at: "2013-05-13 15:22:42", seq: 160, activity_ae: false, activity_bl: false, activity_minusd: false, activity_hh: false, activity_kc: false, activity_ke: false, activity_kf: false, activity_ks: false, activity_op: false, activity_or: false, activity_pr: false, activity_rm: false, activity_rr: false, activity_minust: false, activity_tb: false, activity_tf: false, activity_ts: false, activity_tw: false, activity_minusu: false, activity_a: false, activity_c: false, activity_d: false, activity_e: false, activity_g: false, activity_h: false, activity_k: false, activity_l: false, activity_n: false, activity_r: false, activity_s: false, activity_t: true, activity_u: false, activity_w: false, activity_x: false, next_day_arrival: false, next_day_departure: true, arrival_secs: 390, departure_secs: 450, pass_secs: nil, public_arrival_secs: 420, public_departure_secs: 420>}
+
+    def date_and_time_to_timestamp(date, hhmm, next_day)
+        if hhmm.nil?
+            return nil
+        else
+            if next_day == true # add an extra day, if its a next day arrival
+                date = date+1.day 
+            end		
+            planned_ts = Time.now
+            planned_ts = planned_ts.change({:year => date.year,:month => date.month,:day => date.day,:hour => hhmm[0,2].to_i, :min => hhmm[2,2].to_i,:sec => 0})
+            return planned_ts
+        end        
+    end
+    
+    
 end
