@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130812115638) do
+ActiveRecord::Schema.define(:version => 20140114143950) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -83,7 +83,10 @@ ActiveRecord::Schema.define(:version => 20130812115638) do
     t.string   "origin_public_departure",   :limit => 5
   end
 
+  add_index "basic_schedules", ["atoc_code"], :name => "index_basic_schedules_on_atoc_code"
   add_index "basic_schedules", ["category"], :name => "index_basic_schedules_on_category"
+  add_index "basic_schedules", ["destin_tiploc"], :name => "index_basic_schedules_on_destin_tiploc"
+  add_index "basic_schedules", ["origin_tiploc"], :name => "index_basic_schedules_on_origin_tiploc"
   add_index "basic_schedules", ["runs_fr"], :name => "index_basic_schedules_on_runs_fr"
   add_index "basic_schedules", ["runs_from"], :name => "index_basic_schedules_on_runs_from"
   add_index "basic_schedules", ["runs_mo"], :name => "index_basic_schedules_on_runs_mo"
@@ -571,6 +574,29 @@ ActiveRecord::Schema.define(:version => 20130812115638) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "station_updates", :force => true do |t|
+    t.string   "tiploc_code",                   :limit => 7
+    t.string   "location_type",                 :limit => 2
+    t.string   "platform",                      :limit => 64
+    t.string   "train_id",                      :limit => 10
+    t.integer  "diff_from_timetable_secs"
+    t.string   "event_type",                    :limit => 32
+    t.string   "planned_event_type",            :limit => 32
+    t.string   "variation_status",              :limit => 32
+    t.datetime "created_at",                                  :null => false
+    t.datetime "updated_at",                                  :null => false
+    t.datetime "planned_arrival_timestamp"
+    t.datetime "planned_departure_timestamp"
+    t.datetime "predicted_arrival_timestamp"
+    t.datetime "predicted_departure_timestamp"
+  end
+
+  add_index "station_updates", ["planned_arrival_timestamp"], :name => "index_station_updates_on_planned_arrival_timestamp"
+  add_index "station_updates", ["planned_departure_timestamp"], :name => "index_station_updates_on_planned_departure_timestamp"
+  add_index "station_updates", ["platform"], :name => "index_station_updates_on_platform"
+  add_index "station_updates", ["tiploc_code"], :name => "index_station_updates_on_tiploc_code"
+  add_index "station_updates", ["train_id"], :name => "index_station_updates_on_train_id"
 
   create_table "td_areas", :force => true do |t|
     t.string   "td_area",    :limit => 2

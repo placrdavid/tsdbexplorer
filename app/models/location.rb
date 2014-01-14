@@ -39,6 +39,24 @@ class Location < ActiveRecord::Base
   }
 
 
+  #TODO origin and destin tiplocs should be arrays
+  # Only trains going to a specific origin
+#  scope :origin_filter, lambda { |origin| where(' basic_schedules.origin_tiploc = ?', origin) }
+
+  # Only trains going to a specific destination
+#  scope :destination_filter, lambda { |destination| where(' basic_schedules.destin_tiploc = ?', destination) }
+
+  # Only trains run by a particular operator
+  scope :operator_filter, lambda { |operator_ref| where(' basic_schedules.atoc_code = ?', operator_ref) }
+
+  # Only trains that are part of a particular service
+  scope :service_name_filter, lambda { |service_name| where(' basic_schedules.service_code = ?', service_name) }  
+  
+  scope :schedule_valid_on, lambda { |date|
+    where([ 'basic_schedules.runs_su', 'basic_schedules.runs_mo', 'basic_schedules.runs_tu', 'basic_schedules.runs_we', 'basic_schedules.runs_th', 'basic_schedules.runs_fr', 'basic_schedules.runs_sa' ][Date.parse(date).wday] => true ).appropriate_stp_indicator(date)
+  }
+  
+
   # Only trains which run on a specific date
 
   scope :runs_on, lambda { |date| join_basic_schedule.where('? BETWEEN basic_schedules.runs_from AND basic_schedules.runs_to', date).schedule_valid_on(date) }
@@ -89,18 +107,31 @@ class Location < ActiveRecord::Base
 
 
   # Return an ActiveRecord::Relation object containing all the schedules which arrive, pass or depart a location within a specific time window
-
-  def self.runs_between(from, to, show_passing)
+# TODO origin and destin tiplocs should be arrays!
+  def self.runs_between(from, to, show_passing, 
+	  #origin_tiploc,
+	  #destination_tiploc,
+	  operator_ref,
+	  service_name 
+	  )
 
     queries = Hash.new
 
     trains = Array.new
 
     # We're going to be forming a Location query
-
     schedule_base = Location
-
-    
+	 
+	 # add the origin filter, if not nil
+	 #schedule_base = schedule_base.origin_filter(origin_tiploc) unless origin_tiploc.nil?
+	 # add the destination filter, if not nil
+	 #schedule_base = schedule_base.destination_filter(destination_tiploc) unless destination_tiploc.nil?
+	 # add the ? filter, if not nil
+	 schedule_base = schedule_base.operator_filter(operator_ref) unless operator_ref.nil?
+	 # add the service_name filter, if not nil
+	 schedule_base = schedule_base.service_name_filter(service_name) unless service_name.nil?
+	 
+	     
     if from.midnight == to.midnight
       # The time window doesn't span midnight, so retrieve the following schedules:
       #
@@ -110,9 +141,13 @@ class Location < ActiveRecord::Base
       run_date = from.midnight
 
       # Return all schedules which run today and call on this day within the window
+
       q1 = schedule_base.runs_on(from.to_s(:yyyymmdd)).where('locations.next_day_departure = false OR locations.next_day_arrival = false').includes(:basic_schedule)
-      #puts 'q1'
-      #p q1
+      #q1.destination_filter(destination_tiploc) unless destination_tiploc.nil?
+		
+#      q1 =				schedule_base.runs_on(from.to_s(:yyyymmdd)).destination_tiploc(destination_tiploc).where('locations.next_day_departure = false OR locations.next_day_arrival = false').includes(:basic_schedule)
+
+#
 
       if show_passing == true
         q1 = q1.passes_between(from.to_s(:hhmm), to.to_s(:hhmm))
@@ -127,9 +162,12 @@ class Location < ActiveRecord::Base
 
       # Return all schedules which ran yesterday and call on the next day within the window (i.e. over midnight)
 
+
+
+#      q2 = schedule_base.runs_on((from - 1.day).to_s(:yyyymmdd)).destination_filter(destination_tiploc).where('locations.next_day_departure = true OR locations.next_day_arrival = true').includes(:basic_schedule)
+
       q2 = schedule_base.runs_on((from - 1.day).to_s(:yyyymmdd)).where('locations.next_day_departure = true OR locations.next_day_arrival = true').includes(:basic_schedule)
-      #puts 'q2'
-      #p q2
+      #q2.destination_filter(destination_tiploc) unless destination_tiploc.nil?
 
       if show_passing == true
         q2 = q2.passes_between(from.to_s(:hhmm), to.to_s(:hhmm))
@@ -155,9 +193,12 @@ class Location < ActiveRecord::Base
       puts 'day_after_midnight '+day_after_midnight.to_s
       # Return all schedules which run on the day before midnight and call up until midnight
 
+
+
+#      q1 = schedule_base.runs_on(day_before_midnight.to_s(:yyyymmdd)).destination_tiploc(destination_tiploc).where('locations.next_day_departure = false OR locations.next_day_arrival = false').includes(:basic_schedule)
       q1 = schedule_base.runs_on(day_before_midnight.to_s(:yyyymmdd)).where('locations.next_day_departure = false OR locations.next_day_arrival = false').includes(:basic_schedule)
-      #puts 'q1'
-      #p q1
+      #q1.destination_filter(destination_tiploc) unless destination_tiploc.nil?
+
 
       if show_passing == true
         q1 = q1.passes_between(from.to_s(:hhmm), "2359H")
@@ -172,9 +213,9 @@ class Location < ActiveRecord::Base
 
       # Return all schedules which run on the day before midnight and call after midnight
 
+#      q2 = schedule_base.runs_on(day_before_midnight.to_s(:yyyymmdd)).destination_tiploc(destination_tiploc).where('locations.next_day_departure = true OR locations.next_day_arrival = true').includes(:basic_schedule)
       q2 = schedule_base.runs_on(day_before_midnight.to_s(:yyyymmdd)).where('locations.next_day_departure = true OR locations.next_day_arrival = true').includes(:basic_schedule)
-      #puts 'q2'
-      #p q2
+      #q2.destination_filter(destination_tiploc) unless destination_tiploc.nil?
 
       if show_passing == true
         q2 = q2.passes_between('0000', to.to_s(:hhmm))
@@ -189,9 +230,9 @@ class Location < ActiveRecord::Base
 
       # Return all schedules which run on the day after midnight and call between midnight and the end of the time window
 
+#      q3 = schedule_base.runs_on(to.to_s(:yyyymmdd)).destination_tiploc(destination_tiploc).where('locations.next_day_departure = false AND locations.next_day_arrival = false').includes(:basic_schedule)
       q3 = schedule_base.runs_on(to.to_s(:yyyymmdd)).where('locations.next_day_departure = false AND locations.next_day_arrival = false').includes(:basic_schedule)
-      #puts 'q3'
-      #p q3
+		#q3.destination_filter(destination_tiploc) unless destination_tiploc.nil?
 
       if show_passing == true
         q3 = q3.passes_between('0000', to.to_s(:hhmm))

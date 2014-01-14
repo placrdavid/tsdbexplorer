@@ -298,7 +298,18 @@ class LiveController < ApplicationController
         @range = Hash.new
         @range[:from] = now -before_range
         @range[:to] = now + after_range
-        @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
+
+			operator_ref = nil
+			operator_ref = params[:operator_ref].upcase unless params[:operator_ref].nil?
+#			service_name = nil
+			service_name = params[:service_name]
+			
+		 # TODO filter by origin and destination tiplocS (not tiploc)
+        @schedule = @schedule.runs_between(@range[:from], @range[:to], false, 
+#		  params[:origin_tiploc],
+#		  params[:destination_tiploc],
+		  operator_ref,
+		  service_name)
 
         # get timetables from schedules
         timetables_array=[] 

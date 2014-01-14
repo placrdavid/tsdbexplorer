@@ -99,8 +99,10 @@ class LocationController < ApplicationController
 
     # Finally, run the query for schedules valid in the time window
 
+#	 destination_tiploc = 'EUSTON'
+
 #    @schedule = @schedule.runs_between(@range[:from], @range[:to], advanced_mode?)
-    @schedule = @schedule.runs_between(@range[:from], @range[:to], true)
+    @schedule = @schedule.runs_between(@range[:from], @range[:to], true, nil, nil)
 #    @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
     puts 'n schedules = '+@schedule.count.to_s
 
