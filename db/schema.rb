@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140114143950) do
+ActiveRecord::Schema.define(:version => 20140115105322) do
 
   create_table "associations", :force => true do |t|
     t.string   "main_train_uid"
@@ -77,9 +77,9 @@ ActiveRecord::Schema.define(:version => 20140114143950) do
     t.boolean  "oper_q"
     t.boolean  "oper_y"
     t.string   "origin_tiploc",             :limit => 7
-    t.string   "origin_name",               :limit => 26
+    t.string   "origin_name",               :limit => 50
     t.string   "destin_tiploc",             :limit => 7
-    t.string   "destin_name",               :limit => 26
+    t.string   "destin_name",               :limit => 50
     t.string   "origin_public_departure",   :limit => 5
   end
 
@@ -103,6 +103,52 @@ ActiveRecord::Schema.define(:version => 20140114143950) do
   add_index "basic_schedules", ["train_uid", "runs_from", "stp_indicator"], :name => "bsi_trainuid_stpindicator_runsfrom"
   add_index "basic_schedules", ["train_uid"], :name => "index_basic_schedules_on_train_uid"
   add_index "basic_schedules", ["uuid"], :name => "index_basic_schedules_on_uuid"
+
+  create_table "basic_schedules_201303120918", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "uuid",                      :limit => 36
+    t.string   "train_uid",                 :limit => 6
+    t.string   "status",                    :limit => 1
+    t.date     "runs_from"
+    t.date     "runs_to"
+    t.boolean  "runs_mo"
+    t.boolean  "runs_tu"
+    t.boolean  "runs_we"
+    t.boolean  "runs_th"
+    t.boolean  "runs_fr"
+    t.boolean  "runs_sa"
+    t.boolean  "runs_su"
+    t.string   "bh_running",                :limit => 1
+    t.string   "category",                  :limit => 2
+    t.string   "train_identity",            :limit => 4
+    t.string   "train_identity_unique",     :limit => 10
+    t.string   "headcode",                  :limit => 4
+    t.string   "service_code",              :limit => 8
+    t.string   "portion_id",                :limit => 1
+    t.string   "power_type",                :limit => 3
+    t.string   "timing_load",               :limit => 4
+    t.string   "speed",                     :limit => 3
+    t.string   "operating_characteristics", :limit => 6
+    t.string   "train_class",               :limit => 1
+    t.string   "sleepers",                  :limit => 1
+    t.string   "reservations",              :limit => 1
+    t.string   "catering_code",             :limit => 4
+    t.string   "service_branding",          :limit => 1
+    t.string   "stp_indicator",             :limit => 1
+    t.string   "uic_code",                  :limit => 5
+    t.string   "atoc_code",                 :limit => 2
+    t.string   "ats_code",                  :limit => 1
+    t.string   "rsid",                      :limit => 8
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "data_source",               :limit => 16
+    t.boolean  "oper_q"
+    t.boolean  "oper_y"
+    t.string   "origin_tiploc",             :limit => 7
+    t.string   "origin_name",               :limit => 26
+    t.string   "destin_tiploc",             :limit => 7
+    t.string   "destin_name",               :limit => 26
+  end
 
   create_table "basic_schedules_new", :id => false, :force => true do |t|
     t.integer  "id"
@@ -353,6 +399,16 @@ ActiveRecord::Schema.define(:version => 20140114143950) do
   add_index "live_msgs", ["msg_type"], :name => "index_live_msgs_on_msg_type"
   add_index "live_msgs", ["train_id"], :name => "index_live_msgs_on_train_id"
 
+  create_table "live_msgs_201303120918", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "msg_type",            :limit => 4
+    t.string   "basic_schedule_uuid", :limit => 36
+    t.string   "train_id",            :limit => 10
+    t.string   "msg_body",            :limit => 10000
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "locations", :force => true do |t|
     t.string   "basic_schedule_uuid",   :limit => 36
     t.string   "location_type",         :limit => 2
@@ -415,19 +471,68 @@ ActiveRecord::Schema.define(:version => 20140114143950) do
     t.integer  "public_departure_secs"
   end
 
-  add_index "locations", ["arrival"], :name => "index_locations_on_arrival"
-  add_index "locations", ["arrival_secs"], :name => "index_locations_on_arrival_secs"
-  add_index "locations", ["basic_schedule_uuid"], :name => "index_locations_on_basic_schedule_uuid"
-  add_index "locations", ["departure"], :name => "index_locations_on_departure"
-  add_index "locations", ["departure_secs"], :name => "index_locations_on_departure_secs"
-  add_index "locations", ["location_type"], :name => "index_locations_on_location_type"
-  add_index "locations", ["next_day_arrival"], :name => "index_locations_on_next_day_arrival"
-  add_index "locations", ["next_day_departure"], :name => "index_locations_on_next_day_departure"
-  add_index "locations", ["pass"], :name => "index_locations_on_pass"
-  add_index "locations", ["public_arrival"], :name => "index_locations_on_public_arrival"
-  add_index "locations", ["public_departure"], :name => "index_locations_on_public_departure"
-  add_index "locations", ["seq"], :name => "index_locations_on_seq"
-  add_index "locations", ["tiploc_code"], :name => "index_locations_on_tiploc_code"
+  create_table "locations_201303120918", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "basic_schedule_uuid",   :limit => 36
+    t.string   "location_type",         :limit => 2
+    t.string   "tiploc_code",           :limit => 7
+    t.integer  "tiploc_instance"
+    t.string   "arrival",               :limit => 5
+    t.string   "public_arrival",        :limit => 5
+    t.string   "pass",                  :limit => 5
+    t.string   "departure",             :limit => 5
+    t.string   "public_departure",      :limit => 5
+    t.string   "platform",              :limit => 3
+    t.string   "line",                  :limit => 3
+    t.string   "path",                  :limit => 3
+    t.string   "engineering_allowance", :limit => 2
+    t.string   "pathing_allowance",     :limit => 2
+    t.string   "performance_allowance", :limit => 2
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "seq"
+    t.boolean  "activity_ae"
+    t.boolean  "activity_bl"
+    t.boolean  "activity_minusd"
+    t.boolean  "activity_hh"
+    t.boolean  "activity_kc"
+    t.boolean  "activity_ke"
+    t.boolean  "activity_kf"
+    t.boolean  "activity_ks"
+    t.boolean  "activity_op"
+    t.boolean  "activity_or"
+    t.boolean  "activity_pr"
+    t.boolean  "activity_rm"
+    t.boolean  "activity_rr"
+    t.boolean  "activity_minust"
+    t.boolean  "activity_tb"
+    t.boolean  "activity_tf"
+    t.boolean  "activity_ts"
+    t.boolean  "activity_tw"
+    t.boolean  "activity_minusu"
+    t.boolean  "activity_a"
+    t.boolean  "activity_c"
+    t.boolean  "activity_d"
+    t.boolean  "activity_e"
+    t.boolean  "activity_g"
+    t.boolean  "activity_h"
+    t.boolean  "activity_k"
+    t.boolean  "activity_l"
+    t.boolean  "activity_n"
+    t.boolean  "activity_r"
+    t.boolean  "activity_s"
+    t.boolean  "activity_t"
+    t.boolean  "activity_u"
+    t.boolean  "activity_w"
+    t.boolean  "activity_x"
+    t.boolean  "next_day_arrival"
+    t.boolean  "next_day_departure"
+    t.integer  "arrival_secs"
+    t.integer  "departure_secs"
+    t.integer  "pass_secs"
+    t.integer  "public_arrival_secs"
+    t.integer  "public_departure_secs"
+  end
 
   create_table "locations_new", :id => false, :force => true do |t|
     t.integer  "id"
@@ -575,29 +680,6 @@ ActiveRecord::Schema.define(:version => 20140114143950) do
     t.datetime "updated_at"
   end
 
-  create_table "station_updates", :force => true do |t|
-    t.string   "tiploc_code",                   :limit => 7
-    t.string   "location_type",                 :limit => 2
-    t.string   "platform",                      :limit => 64
-    t.string   "train_id",                      :limit => 10
-    t.integer  "diff_from_timetable_secs"
-    t.string   "event_type",                    :limit => 32
-    t.string   "planned_event_type",            :limit => 32
-    t.string   "variation_status",              :limit => 32
-    t.datetime "created_at",                                  :null => false
-    t.datetime "updated_at",                                  :null => false
-    t.datetime "planned_arrival_timestamp"
-    t.datetime "planned_departure_timestamp"
-    t.datetime "predicted_arrival_timestamp"
-    t.datetime "predicted_departure_timestamp"
-  end
-
-  add_index "station_updates", ["planned_arrival_timestamp"], :name => "index_station_updates_on_planned_arrival_timestamp"
-  add_index "station_updates", ["planned_departure_timestamp"], :name => "index_station_updates_on_planned_departure_timestamp"
-  add_index "station_updates", ["platform"], :name => "index_station_updates_on_platform"
-  add_index "station_updates", ["tiploc_code"], :name => "index_station_updates_on_tiploc_code"
-  add_index "station_updates", ["train_id"], :name => "index_station_updates_on_train_id"
-
   create_table "td_areas", :force => true do |t|
     t.string   "td_area",    :limit => 2
     t.text     "name"
@@ -667,6 +749,20 @@ ActiveRecord::Schema.define(:version => 20140114143950) do
   add_index "tiplocs", ["stanox"], :name => "index_tiplocs_on_stanox"
   add_index "tiplocs", ["tiploc_code"], :name => "index_tiplocs_on_tiploc_code", :unique => true
 
+  create_table "tiplocs_201303120918", :id => false, :force => true do |t|
+    t.integer "id"
+    t.string  "tiploc_code",     :limit => 7
+    t.string  "nalco",           :limit => 6
+    t.string  "tps_description", :limit => 26
+    t.string  "stanox",          :limit => 5
+    t.string  "crs_code",        :limit => 3
+    t.string  "description",     :limit => 16
+    t.float   "geo_lat"
+    t.float   "geo_lon"
+    t.boolean "is_public"
+    t.string  "nalco_four",      :limit => 4
+  end
+
   create_table "tiplocs_new", :id => false, :force => true do |t|
     t.integer "id"
     t.string  "tiploc_code",     :limit => 7
@@ -726,6 +822,36 @@ ActiveRecord::Schema.define(:version => 20140114143950) do
 
   add_index "tracked_trains", ["basic_schedule_uuid"], :name => "index_tracked_trains_on_basic_schedule_uuid"
   add_index "tracked_trains", ["train_id"], :name => "index_tracked_trains_on_train_id"
+
+  create_table "tracked_trains_201303120918", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.string   "msg_type",             :limit => 4
+    t.string   "schedule_source",      :limit => 1
+    t.string   "train_file_address",   :limit => 4
+    t.date     "schedule_end_date"
+    t.string   "train_id",             :limit => 10
+    t.date     "tp_origin_timestamp"
+    t.datetime "creation_timestamp"
+    t.string   "tp_origin_stanox",     :limit => 5
+    t.datetime "origin_dep_timestamp"
+    t.string   "train_service_code",   :limit => 8
+    t.string   "toc_id",               :limit => 2
+    t.string   "d1266_record_number",  :limit => 5
+    t.string   "train_call_type",      :limit => 25
+    t.string   "train_uid",            :limit => 6
+    t.string   "train_call_mode",      :limit => 25
+    t.string   "schedule_type",        :limit => 1
+    t.string   "sched_origin_stanox",  :limit => 5
+    t.string   "schedule_wtt_id",      :limit => 5
+    t.date     "schedule_start_date"
+    t.string   "origin_dep_hhmm",      :limit => 5
+    t.string   "basic_schedule_uuid",  :limit => 36
+    t.string   "origin_name",          :limit => 64
+    t.string   "destination_name",     :limit => 64
+    t.string   "atoc_code",            :limit => 2
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "train_jsonschedule_imports", :force => true do |t|
     t.datetime "import_start"
