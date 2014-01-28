@@ -304,10 +304,19 @@ class LiveController < ApplicationController
 #			service_name = nil
 			service_name = params[:service_name]
 			
+ 		origin_tiplocs = nil
+		origin_tiplocs = params[:origin_tiploc].split(',') unless params[:origin_tiploc].nil?
+ 		destin_tiplocs = nil
+ 		destin_tiplocs = params[:destination_tiploc].split(',') unless params[:destination_tiploc].nil?
+		  
+		#puts('origin_tiplocs = ')
+		#p origin_tiplocs
+		#puts('destin_tiplocs = ')
+		#p destin_tiplocs
 		 # TODO filter by origin and destination tiplocS (not tiploc)
         @schedule = @schedule.runs_between(@range[:from], @range[:to], false, 
-#		  params[:origin_tiploc],
-#		  params[:destination_tiploc],
+		  origin_tiplocs,
+		  destin_tiplocs,
 		  operator_ref,
 		  service_name)
 

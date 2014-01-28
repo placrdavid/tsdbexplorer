@@ -39,12 +39,11 @@ class Location < ActiveRecord::Base
   }
 
 
-  #TODO origin and destin tiplocs should be arrays
   # Only trains going to a specific origin
-#  scope :origin_filter, lambda { |origin| where(' basic_schedules.origin_tiploc = ?', origin) }
+  scope :origin_filter, lambda { |origin| where(' basic_schedules.origin_tiploc IN (?)', origin) }
 
   # Only trains going to a specific destination
-#  scope :destination_filter, lambda { |destination| where(' basic_schedules.destin_tiploc = ?', destination) }
+  scope :destination_filter, lambda { |destination| where(' basic_schedules.destin_tiploc IN (?)', destination) }
 
   # Only trains run by a particular operator
   scope :operator_filter, lambda { |operator_ref| where(' basic_schedules.atoc_code = ?', operator_ref) }
@@ -109,10 +108,10 @@ class Location < ActiveRecord::Base
   # Return an ActiveRecord::Relation object containing all the schedules which arrive, pass or depart a location within a specific time window
 # TODO origin and destin tiplocs should be arrays!
   def self.runs_between(from, to, show_passing, 
-	  #origin_tiploc,
-	  #destination_tiploc,
-	  operator_ref,
-	  service_name 
+	  origin_tiplocs=nil,
+	  destination_tiplocs=nil,
+	  operator_ref=nil,
+	  service_name=nil 
 	  )
 
     queries = Hash.new
@@ -130,6 +129,13 @@ class Location < ActiveRecord::Base
 	 schedule_base = schedule_base.operator_filter(operator_ref) unless operator_ref.nil?
 	 # add the service_name filter, if not nil
 	 schedule_base = schedule_base.service_name_filter(service_name) unless service_name.nil?
+	 #puts 'filtering on origin + '+origin_tiplocs.to_s
+	 # add the origin tiploc filter, if not nil
+	 schedule_base = schedule_base.origin_filter(origin_tiplocs) unless origin_tiplocs.nil?
+	 #puts 'filtered on origin + '+origin_tiplocs.to_s
+	 # add the destination tiploc filter, if not nil
+	 schedule_base = schedule_base.destination_filter(destination_tiplocs) unless destination_tiplocs.nil?
+
 	 
 	     
     if from.midnight == to.midnight

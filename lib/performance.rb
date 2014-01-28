@@ -37,7 +37,7 @@ class Performance
       @range[:from] = now
       @range[:to] = now + after_range
       
-      @schedule = @schedule.runs_between(@range[:from], @range[:to], false)
+      @schedule = @schedule.runs_between(@range[:from], @range[:to], false, nil, nil, nil, nil)
 
       timetables_array=[] 
 
