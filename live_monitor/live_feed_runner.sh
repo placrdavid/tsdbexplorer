@@ -8,6 +8,8 @@
     if ! flock -n 9; then exit 1; fi
 
     # source the .profile file, which adds rbenv paths to PATH, allowing cron to run ruby files
+    # TODO: If this .profile contains 'mesg n' then cron will email you saying "stdin is not a tty".
+    # - which is pretty useful when it happens every minute...! 
     source /root/.profile
 
     cd $(dirname $0) #change directory to the diretory this file is in
