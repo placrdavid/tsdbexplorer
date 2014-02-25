@@ -4,8 +4,8 @@ source 'http://rubygems.org'
 
 gem 'rails', '3.2.6'
 gem 'rake', '0.9.2.2'
-gem 'pg', '>= 0.11.0'
-
+#gem 'pg', '>= 0.11.0'
+gem 'activerecord-jdbcpostgresql-adapter'
 
 # Asset Pipeline
 
@@ -22,8 +22,8 @@ end
 
 gem 'jquery-rails'
 gem 'execjs'
-gem 'therubyracer'
-
+#gem 'therubyracer'
+gem 'therubyrhino'
 
 # Application-specific gems
 
@@ -47,8 +47,8 @@ group :test do
   gem 'cucumber-rails'
   gem 'database_cleaner'
   gem "guard-rspec", ">= 0.5.7"
-  gem "rb-inotify", :require => false if RUBY_PLATFORM =~ /linux/i
-  gem "libnotify", :require => false if RUBY_PLATFORM =~ /linux/i
+  gem "rb-inotify", :require => false if RUBY_PLATFORM =~ /java/i
+  gem "libnotify", :require => false if RUBY_PLATFORM =~ /java/i
   gem "rb-fsevent", :require => false if RUBY_PLATFORM =~ /darwin/i
   gem "growl", :require => false if RUBY_PLATFORM =~ /darwin/i
 end

@@ -8,8 +8,9 @@
 # Run on a cron job, every n minute(s)
 
 require 'yaml'
-gem 'pg', '= 0.13.2'
-require "pg"
+#gem 'pg', '= 0.13.2'
+#require "pg"
+require 'activerecord-jdbcpostgresql-adapter'
 require 'time'
 
 # flush out output
