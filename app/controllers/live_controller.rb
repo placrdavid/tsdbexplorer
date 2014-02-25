@@ -251,7 +251,7 @@ class LiveController < ApplicationController
       @response = get_stations_updates_hash
 
       # transform to json, and respond
-      output_json = @response.to_json
+      output_json = Oj.dump @response, :mode => :compat, :time => :ruby
       send_data output_json, :type => "text/plain", :disposition => 'inline'
    end
    
@@ -315,10 +315,7 @@ class LiveController < ApplicationController
 		#p destin_tiplocs
 		 # TODO filter by origin and destination tiplocS (not tiploc)
         @schedule = @schedule.runs_between(@range[:from], @range[:to], false, 
-		  origin_tiplocs,
-		  destin_tiplocs,
-		  operator_ref,
-		  service_name)
+		  origin_tiplocs, destin_tiplocs, operator_ref, service_name, :live_messagify => true)
 
         # get timetables from schedules
         timetables_array=[] 
@@ -360,15 +357,15 @@ class LiveController < ApplicationController
 				end
 
 				#puts 'setting augmented_variation_status to default '+augmented_variation_status
-            live_msgs = LiveMsg.where( :basic_schedule_uuid => bs_uuid ).order('updated_at DESC')
-            n_live_msgs = live_msgs.size()
+            n_live_msgs = schedule[:obj].live_msg_count.to_i
             cancelled = false
             # case where we have a live msg - will dictate our status report
             if n_live_msgs >=1
                 # get the latest msg
-                live_msg_body = JSON.parse(live_msgs[0]['msg_body'])
-                live_msg = live_msgs[0]
-                msg_type = live_msg['msg_type']
+                live_msg_bodies = JSON.parse("[#{schedule[:obj].live_msg_bodies[1...-1]}]")
+                live_msg_body = JSON.parse(live_msg_bodies[0])
+                live_msg_types = schedule[:obj].live_msg_types[1...-1].split(",")
+                msg_type = live_msg_types[0]
 
                 if msg_type == '0003' # movement
                     event_type = live_msg_body['event_type']

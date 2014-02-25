@@ -104,15 +104,24 @@ class Location < ActiveRecord::Base
     joins('LEFT JOIN locations loc_from ON locations.basic_schedule_uuid = loc_from.basic_schedule_uuid').where('loc_from.tiploc_code IN (?) AND locations.seq > loc_from.seq', loc)
   }
 
+  scope :live_messagify, lambda {
+    select(
+      "locations.id, locations.arrival_secs, locations.pass_secs, locations.departure_secs, locations.basic_schedule_uuid, locations.public_arrival, " +
+      "locations.next_day_arrival, locations.public_departure, locations.next_day_departure, locations.platform, locations.tiploc_code, " +
+      "COUNT(live_msgs.id) AS live_msg_count, " +
+      "array_agg(live_msgs.msg_body ORDER BY live_msgs.updated_at DESC) AS live_msg_bodies, " +
+      "array_agg(live_msgs.msg_type ORDER BY live_msgs.updated_at DESC) AS live_msg_types"
+    )
+    .joins("LEFT JOIN live_msgs ON basic_schedules.uuid = live_msgs.basic_schedule_uuid")
+    .group("basic_schedules.uuid, locations.id, basic_schedules.id")
+  }
 
   # Return an ActiveRecord::Relation object containing all the schedules which arrive, pass or depart a location within a specific time window
 # TODO origin and destin tiplocs should be arrays!
-  def self.runs_between(from, to, show_passing, 
-	  origin_tiplocs=nil,
-	  destination_tiplocs=nil,
-	  operator_ref=nil,
-	  service_name=nil 
-	  )
+  def self.runs_between(from, to, show_passing, origin_tiplocs = nil, destination_tiplocs = nil,
+    operator_ref = nil, service_name = nil, opts = {})
+
+    live_messagify = opts.has_key?(:live_messagify) ? opts[:live_messagify] : false
 
     queries = Hash.new
 
@@ -161,6 +170,8 @@ class Location < ActiveRecord::Base
         q1 = q1.calls_between(from.to_s(:hhmm), to.to_s(:hhmm))
       end
 
+      q1 = q1.live_messagify if live_messagify
+
       q1.each do |s|
         trains.push({ :a => s.arrival_secs.nil? ? nil : run_date + s.arrival_secs, :p => s.pass_secs.nil? ? nil : run_date + s.pass_secs, :d => s.departure_secs.nil? ? nil : run_date + s.departure_secs, :runs_on => run_date, :obj => s })
       end
@@ -180,6 +191,8 @@ class Location < ActiveRecord::Base
       else
         q2 = q2.calls_between(from.to_s(:hhmm), to.to_s(:hhmm))
       end
+
+      q2 = q2.live_messagify if live_messagify
 
       q2.each do |s|
         trains.push({ :a => s.arrival_secs.nil? ? nil : run_date + s.arrival_secs, :p => s.pass_secs.nil? ? nil : run_date + s.pass_secs, :d => s.departure_secs.nil? ? nil : run_date + s.departure_secs, :runs_on => run_date - 1.day, :obj => s })
@@ -212,6 +225,8 @@ class Location < ActiveRecord::Base
         q1 = q1.calls_between(from.to_s(:hhmm), "2359H")
       end
 
+      q1 = q1.live_messagify if live_messagify
+
       q1.each do |s|
         trains.push({ :a => s.arrival_secs.nil? ? nil : day_before_midnight + s.arrival_secs, :p => s.pass_secs.nil? ? nil : day_before_midnight + s.pass_secs, :d => s.departure_secs.nil? ? nil : day_before_midnight + s.departure_secs, :runs_on => day_before_midnight, :obj => s })
       end
@@ -228,6 +243,8 @@ class Location < ActiveRecord::Base
       else
         q2 = q2.calls_between('0000', to.to_s(:hhmm))
       end
+
+      q2 = q2.live_messagify if live_messagify
 
       q2.each do |s|
         trains.push({ :a => s.arrival_secs.nil? ? nil : day_after_midnight + s.arrival_secs, :p => s.pass_secs.nil? ? nil : day_after_midnight + s.pass_secs, :d => s.departure_secs.nil? ? nil : day_after_midnight + s.departure_secs, :runs_on => day_before_midnight, :obj => s })
@@ -246,6 +263,8 @@ class Location < ActiveRecord::Base
         q3 = q3.calls_between('0000', to.to_s(:hhmm))
       end
 
+      q3 = q3.live_messagify if live_messagify
+
       q3.each do |s|
         trains.push({ :a => s.arrival_secs.nil? ? nil : day_after_midnight + s.arrival_secs, :p => s.pass_secs.nil? ? nil : day_after_midnight + s.pass_secs, :d => s.departure_secs.nil? ? nil : day_after_midnight + s.departure_secs, :runs_on => day_after_midnight, :obj => s })
       end
@@ -256,7 +275,6 @@ class Location < ActiveRecord::Base
     return trains
 
   end
-
 
   # Get the n departures for this station, at the specified time / date
    def Location.get_departures(tiploc_code_array, starttime, endtime, n)
